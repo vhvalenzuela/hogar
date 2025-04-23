@@ -1049,10 +1049,12 @@
 
 // ===== PHOTO SYSTEM =====
 const polaroidImages = [
-    { url: 'img/image1.png', caption: 'Naturaleza' },
-    { url: 'img/image2.png', caption: 'Ciudad' },
-    { url: 'https://source.unsplash.com/random/800x600/?beach', caption: 'Playa' },
-    //... resto de imágenes
+  { url: "img/image1.png", caption: "Naturaleza" },
+  { url: "img/image2.png", caption: "Ciudad" },
+  { url: "img/image3.png", caption: "Atardecer" },
+  { url: "img/image4.png", caption: "Amanecer" },
+  { url: "img/image5.png", caption: "Montañas" },
+  // Add more local images as needed
 ];
 
 
@@ -1494,71 +1496,135 @@ const polaroidImages = [
         }
     }
 
+
+
     // ===== PHOTO SYSTEM =====
 function initPolaroids() {
-    const polaroidContainer = document.getElementById('polaroid-container');
-    polaroidContainer.innerHTML = '';
-    polaroids = [];
-    
-    // CARGAR DESDE CARPETA LOCAL
-    const localImages = polaroidImages.filter(img => img.url.startsWith('img/'));
-    
-    // USAR SOLO IMÁGENES LOCALES (eliminar placeholders de internet)
-    createPolaroids(localImages.length > 0 ? localImages : polaroidImages);
-}
+  try {
+    debug("Initializing polaroids...")
+    const polaroidContainer = document.getElementById("polaroid-container")
+    polaroidContainer.innerHTML = ""
+    polaroids = []
 
+    // Create polaroids from local images
+    createPolaroids(polaroidImages)
+
+    // Set initial display
+    if (polaroids.length > 0) {
+      polaroidIndex = 0
+      polaroids[0].style.display = "block"
+      polaroids[0].classList.add("active")
+      polaroids[0].style.setProperty("--rotate", `${Math.random() * 20 - 10}deg`)
+      polaroids[0].style.setProperty("--z", `${Math.random() * 50}px`)
+
+      // Hide other polaroids
+      for (let i = 1; i < polaroids.length; i++) {
+        polaroids[i].style.display = "none"
+        polaroids[i].classList.remove("active")
+      }
+    }
+
+    debug(`Initialized ${polaroids.length} polaroids successfully`)
+  } catch (error) {
+    debug("Error initializing polaroids: " + error.message)
+  }
+}
     
 function createPolaroids(images) {
-    const polaroidContainer = document.getElementById('polaroid-container');
-    
+  try {
+    const polaroidContainer = document.getElementById("polaroid-container")
+
     images.forEach((image, index) => {
-        const polaroid = document.createElement('div');
-        polaroid.className = 'polaroid';
-        
-        const img = new Image();
-        img.src = image.url;
-        img.className = 'polaroid-img';
-        img.alt = image.caption;
-        
-        // MANEJO DE ERRORES
-        img.onerror = function() {
-            console.error('Error cargando:', image.url);
-            this.src = 'img/fallback.png'; // Crea esta imagen como respaldo
-        };
-        
-        const caption = document.createElement('div');
-        caption.className = 'polaroid-caption';
-        caption.textContent = image.caption;
-        
-        polaroid.appendChild(img);
-        polaroid.appendChild(caption);
-        polaroidContainer.appendChild(polaroid);
-        polaroids.push(polaroid);
-    });
+      const polaroid = document.createElement("div")
+      polaroid.className = "polaroid"
+
+      // Set random rotation and z-index for 3D effect
+      polaroid.style.setProperty("--rotate", `${Math.random() * 20 - 10}deg`)
+      polaroid.style.setProperty("--z", `${Math.random() * 50}px`)
+
+      const img = new Image()
+      img.crossOrigin = "anonymous" // Add this to avoid CORS issues
+      img.className = "polaroid-img"
+      img.alt = image.caption
+
+      // Add loading indicator
+      const loadingDiv = document.createElement("div")
+      loadingDiv.textContent = "Cargando..."
+      loadingDiv.style.position = "absolute"
+      loadingDiv.style.top = "50%"
+      loadingDiv.style.left = "50%"
+      loadingDiv.style.transform = "translate(-50%, -50%)"
+      loadingDiv.style.color = "#333"
+      polaroid.appendChild(loadingDiv)
+
+      // Handle successful image load
+      img.onload = () => {
+        polaroid.removeChild(loadingDiv)
+        debug(`Image loaded successfully: ${image.url}`)
+      }
+
+      // Handle image load errors
+      img.onerror = () => {
+        debug(`Error loading image: ${image.url}`)
+        polaroid.removeChild(loadingDiv)
+
+        // Create fallback content
+        const errorDiv = document.createElement("div")
+        errorDiv.textContent = "❌ Imagen no disponible"
+        errorDiv.style.width = "300px"
+        errorDiv.style.height = "200px"
+        errorDiv.style.display = "flex"
+        errorDiv.style.alignItems = "center"
+        errorDiv.style.justifyContent = "center"
+        errorDiv.style.backgroundColor = "#f8f8f8"
+        errorDiv.style.color = "#333"
+        errorDiv.style.fontSize = "1.2rem"
+        polaroid.insertBefore(errorDiv, polaroid.firstChild)
+      }
+
+      // Set image source after setting up event handlers
+      img.src = image.url
+
+      const caption = document.createElement("div")
+      caption.className = "polaroid-caption"
+      caption.textContent = image.caption
+
+      polaroid.appendChild(img)
+      polaroid.appendChild(caption)
+      polaroidContainer.appendChild(polaroid)
+      polaroids.push(polaroid)
+    })
+  } catch (error) {
+    debug("Error creating polaroids: " + error.message)
+  }
+}
+    
+function rotatePolaroids() {
+  try {
+    if (polaroids.length <= 1) return
+
+    // Hide current polaroid
+    polaroids[polaroidIndex].style.display = "none"
+    polaroids[polaroidIndex].classList.remove("active")
+
+    // Update index
+    polaroidIndex = (polaroidIndex + 1) % polaroids.length
+
+    // Show next polaroid with new random rotation and z-index
+    const newRotate = Math.random() * 20 - 10
+    const newZ = Math.random() * 50
+
+    polaroids[polaroidIndex].style.setProperty("--rotate", `${newRotate}deg`)
+    polaroids[polaroidIndex].style.setProperty("--z", `${newZ}px`)
+    polaroids[polaroidIndex].style.display = "block"
+    polaroids[polaroidIndex].classList.add("active")
+
+    debug(`Rotated to polaroid ${polaroidIndex}`)
+  } catch (error) {
+    debug("Error rotating polaroids: " + error.message)
+  }
 }
 
-    
-    function rotatePolaroids() {
-        try {
-            if (polaroids.length <= 1) return;
-            
-            // Hide current polaroid
-            polaroids[polaroidIndex].style.display = 'none';
-            polaroids[polaroidIndex].classList.remove('active');
-            
-            // Update index
-            polaroidIndex = (polaroidIndex + 1) % polaroids.length;
-            
-            // Show next polaroid with new random rotation
-            polaroids[polaroidIndex].style.setProperty('--rotate', `${Math.random() * 20 - 10}deg`);
-            polaroids[polaroidIndex].classList.add('active');
-            polaroids[polaroidIndex].style.display = 'block';
-            
-            debug("Polaroids rotated successfully");
-        } catch (error) {
-            debug("Error rotating polaroids: " + error.message);
-        }
-    }
 
 // Para barajar el orden de reproducción
 let trackOrder = [];
