@@ -1,2178 +1,2041 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nexus Temporal - Instalación Digital Artística</title>
-<style>
-    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Raleway:wght@200;300;400;500&display=swap');
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chronos Nexus | Instalación Artística Digital</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Jost:wght@200;300;400;500&display=swap');
 
     * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --color-bg: #080808;
+      --color-primary: #f2f2f2;
+      --color-accent: #00e5ff;
+      --color-accent-alt: #ff00aa;
+      --color-dark: #121212;
+      --color-text: #ffffff;
+      --font-display: 'Syncopate', sans-serif;
+      --font-body: 'Jost', sans-serif;
+      --transition-slow: 1.5s cubic-bezier(0.23, 1, 0.32, 1);
+      --transition-medium: 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+      --transition-fast: 0.4s cubic-bezier(0.23, 1, 0.32, 1);
     }
 
     body {
-        width: 100vw;
-        height: 100vh;
-        overflow: hidden;
-        background-color: #000;
-        color: #fff;
-        position: relative;
-        font-family: 'Raleway', sans-serif;
-    }
-
-    .container {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      font-family: var(--font-body);
+      font-weight: 300;
+      position: relative;
+      perspective: 1000px;
     }
 
     /* Canvas layers */
-    #canvas-container {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
+    .canvas-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
     }
 
-    #background-canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0.5;
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
     }
 
-    #fluid-canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0.8;
+    /* Main container */
+    .nexus-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      perspective: 1200px;
     }
 
-    #particle-canvas {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0.6;
-    }
-
-    #audio-canvas {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 200px;
-        opacity: 0.7;
-    }
-
-    /* Interface */
-    .interface {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 2;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        perspective: 1000px;
-    }
-
+    /* Module system */
     .module {
-        position: absolute;
-        opacity: 0;
-        visibility: hidden;
-        transition: opacity 3s ease, transform 3s ease, visibility 0s linear 3s;
-        transform: translateY(20px) scale(0.95);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        transform-style: preserve-3d;
+      position: absolute;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity var(--transition-slow), transform var(--transition-slow), visibility 0s linear var(--transition-slow);
+      transform: translateY(20px) scale(0.95);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transform-style: preserve-3d;
+      width: 100%;
+      height: 100%;
     }
 
     .module.active {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0) scale(1);
-        transition: opacity 3s ease, transform 3s ease, visibility 0s linear 0s;
-    }
-
-    /* Welcome Module */
-    .welcome-module {
-        text-align: center;
-    }
-
-    .welcome-container {
-        position: relative;
-        width: 900px;
-        height: 500px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        overflow: hidden;
-    }
-
-    .welcome-bg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        opacity: 0.3;
-        background: radial-gradient(circle, rgba(0,212,255,0.2) 0%, rgba(255,0,255,0.2) 100%);
-        filter: blur(20px);
-        animation: pulse 10s infinite alternate ease-in-out;
-    }
-
-    .welcome-heart {
-        font-size: 10rem;
-        color: #ff0066;
-        animation: pulse 2s infinite ease-in-out;
-        margin-bottom: 2rem;
-        text-shadow: 0 0 30px rgba(255, 0, 102, 0.8);
-        transform-style: preserve-3d;
-        transform: translateZ(50px);
-    }
-
-    .welcome-title {
-        font-size: 7rem;
-        font-weight: 300;
-        margin-bottom: 2rem;
-        background: linear-gradient(to right, #ff00ff, #00ffff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
-        transform-style: preserve-3d;
-        transform: translateZ(30px);
-    }
-
-    .welcome-subtitle {
-        font-size: 4rem;
-        opacity: 0.9;
-        margin-bottom: 3rem;
-        font-weight: 300;
-        transform-style: preserve-3d;
-        transform: translateZ(20px);
-        text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+      transition: opacity var(--transition-slow), transform var(--transition-slow), visibility 0s linear 0s;
     }
 
     /* Time Module */
     .time-module {
-        text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
     }
 
     .time-container {
-        position: relative;
-        width: 650px;
-        height: 650px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        transform-style: preserve-3d;
-    }
-
-    .time-ring {
-        position: absolute;
-        border-radius: 50%;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        transform-style: preserve-3d;
-    }
-
-    .ring-1 {
-        width: 650px;
-        height: 650px;
-        animation: rotate3d 120s linear infinite;
-    }
-
-    .ring-2 {
-        width: 500px;
-        height: 500px;
-        transform: rotateX(60deg);
-        animation: rotate3d-reverse 90s linear infinite;
-        border-width: 2px;
-    }
-
-    .ring-3 {
-        width: 350px;
-        height: 350px;
-        transform: rotateY(60deg);
-        animation: rotate3d 60s linear infinite;
-    }
-
-    .time-circle-core {
-        position: absolute;
-        width: 300px;
-        height: 300px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(0,212,255,0.1) 0%, rgba(0,212,255,0) 70%);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-direction: column;
-        animation: pulse 8s infinite ease-in-out;
+      position: relative;
+      width: 80vmin;
+      height: 80vmin;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transform-style: preserve-3d;
     }
 
     .time-display {
-        font-size: 7rem;
-        font-weight: 200;
-        letter-spacing: 4px;
-        text-shadow: 0 0 20px rgba(0, 212, 255, 0.8);
+      font-family: var(--font-display);
+      font-size: 10vmin;
+      font-weight: 400;
+      letter-spacing: 0.2em;
+      color: var(--color-primary);
+      text-shadow: 0 0 20px rgba(0, 229, 255, 0.5);
+      margin-bottom: 2vmin;
+      position: relative;
+      z-index: 3;
     }
 
     .date-display {
-        font-size: 2rem;
-        opacity: 0.7;
-        margin-top: 1rem;
-        font-weight: 300;
+      font-size: 2vmin;
+      opacity: 0.7;
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 3;
     }
 
-    .time-marker {
-        position: absolute;
-        width: 8px;
-        height: 8px;
-        background-color: #fff;
-        border-radius: 50%;
-        box-shadow: 0 0 10px rgba(0, 212, 255, 0.8);
+    .time-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transform-style: preserve-3d;
+      transition: all var(--transition-medium);
     }
 
-    .time-progress {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
+    .time-grid {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      overflow: hidden;
+      opacity: 0.2;
+    }
+
+    .grid-line {
+      position: absolute;
+      background-color: var(--color-accent);
+      transform-origin: center;
+    }
+
+    .horizontal-line {
+      width: 100%;
+      height: 1px;
+    }
+
+    .vertical-line {
+      width: 1px;
+      height: 100%;
     }
 
     /* Weather Module */
     .weather-module {
-        text-align: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
     }
 
     .weather-container {
-        position: relative;
-        width: 650px;
-        height: 650px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        transform-style: preserve-3d;
+      position: relative;
+      width: 80vmin;
+      height: 80vmin;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
-    .weather-hexagon {
-        position: relative;
-        width: 600px;
-        height: 690px;
-    }
-
-    .hex-container {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        transform-style: preserve-3d;
-    }
-
-    .hex-bg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-        background: linear-gradient(135deg, rgba(255,0,255,0.1) 0%, rgba(0,212,255,0.1) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        animation: pulse 10s infinite ease-in-out alternate;
-    }
-
-    .hex-inner {
-        position: absolute;
-        top: 10%;
-        left: 10%;
-        width: 80%;
-        height: 80%;
-        clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
+    .weather-display {
+      position: relative;
+      width: 60vmin;
+      height: 60vmin;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
     }
 
     .temp-display {
-        font-size: 9rem;
-        font-weight: 200;
-        margin-bottom: 1rem;
-        background: linear-gradient(to right, #ff00ff, #00ffff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+      font-family: var(--font-display);
+      font-size: 12vmin;
+      font-weight: 400;
+      margin-bottom: 2vmin;
+      color: var(--color-accent);
+      text-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
     }
 
     .weather-condition {
-        font-size: 3rem;
-        opacity: 0.8;
-        margin-bottom: 1rem;
-        font-weight: 300;
+      font-size: 3vmin;
+      opacity: 0.9;
+      margin-bottom: 2vmin;
+      font-weight: 300;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
     }
 
     .location-display {
-        font-size: 1.8rem;
-        opacity: 0.6;
-        font-weight: 300;
+      font-size: 2vmin;
+      opacity: 0.6;
+      font-weight: 300;
+      letter-spacing: 0.1em;
     }
 
-    .weather-icon {
-        position: absolute;
-        width: 150px;
-        height: 150px;
-        transform: translateZ(20px);
-    }
-
-    .icon-sun {
-        background: radial-gradient(circle, rgba(255,204,0,0.7) 0%, rgba(255,204,0,0) 70%);
-        border-radius: 50%;
-        animation: pulse 4s infinite ease-in-out;
-    }
-
-    .icon-moon {
-        background: radial-gradient(circle, rgba(220,220,255,0.7) 0%, rgba(220,220,255,0) 70%);
-        border-radius: 50%;
-        animation: pulse 4s infinite ease-in-out;
-        box-shadow: 0 0 30px rgba(220, 220, 255, 0.5);
-    }
-
-    .icon-cloud {
-        background: radial-gradient(circle, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 70%);
-        border-radius: 50%;
-        filter: blur(5px);
-        animation: float 8s infinite ease-in-out alternate;
-    }
-
-    .icon-rain {
-        position: absolute;
-        width: 2px;
-        height: 15px;
-        background: linear-gradient(to bottom, rgba(0,212,255,0), rgba(0,212,255,0.7));
-        animation: rain 2s infinite linear;
-    }
-
-    .icon-stars {
-        position: absolute;
-        width: 3px;
-        height: 3px;
-        background-color: rgba(255, 255, 255, 0.8);
-        border-radius: 50%;
-        box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+    .weather-particles {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
     }
 
     /* Quote Module */
     .quote-module {
-        max-width: 1000px;
-        text-align: center;
-        padding: 0 2rem;
-        transform-style: preserve-3d;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      padding: 5vmin;
     }
 
     .quote-container {
-        position: relative;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        border-radius: 20px;
-        padding: 4rem;
-        transform-style: preserve-3d;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        backdrop-filter: blur(5px);
+      position: relative;
+      max-width: 80vmin;
+      background: rgba(18, 18, 18, 0.5);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      padding: 8vmin;
+      transform-style: preserve-3d;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(5px);
     }
 
     .quote-text {
-        font-family: 'Playfair Display', serif;
-        font-size: 3.5rem;
-        font-weight: 400;
-        font-style: italic;
-        line-height: 1.4;
-        margin-bottom: 2rem;
+      font-family: var(--font-body);
+      font-size: 4vmin;
+      font-weight: 200;
+      line-height: 1.4;
+      margin-bottom: 4vmin;
+      position: relative;
+      z-index: 2;
     }
 
     .quote-author {
-        font-size: 2rem;
-        opacity: 0.7;
-        font-weight: 300;
+      font-size: 2.5vmin;
+      opacity: 0.7;
+      font-weight: 300;
+      text-align: right;
+      position: relative;
+      z-index: 2;
+      font-family: var(--font-display);
+      letter-spacing: 0.1em;
     }
 
     .quote-decoration {
-        position: absolute;
-        font-family: 'Playfair Display', serif;
-        font-size: 12rem;
-        opacity: 0.1;
-        top: -2rem;
-        left: 1rem;
-        transform: translateZ(10px);
+      position: absolute;
+      font-family: var(--font-display);
+      font-size: 20vmin;
+      color: var(--color-accent);
+      opacity: 0.1;
+      top: -4vmin;
+      left: 2vmin;
+      transform: translateZ(10px);
+      z-index: 1;
     }
 
-    /* Sun Module */
-    .sun-module {
-        text-align: center;
-    }
-
-    .sun-container {
-        position: relative;
-        width: 800px;
-        height: 600px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 20px;
-        padding: 2rem;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    }
-
-    .sun-title {
-        font-size: 2.5rem;
-        margin-bottom: 2rem;
-        font-weight: 300;
-        color: rgba(255, 255, 255, 0.9);
-    }
-
-    .sun-arc-container {
-        position: relative;
-        width: 700px;
-        height: 350px;
-        margin-bottom: 2rem;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        overflow: hidden;
-        background: linear-gradient(to bottom, rgba(0,0,50,0.1) 0%, rgba(0,0,50,0.3) 100%);
-    }
-
-    .sun-arc {
-        position: relative;
-        width: 700px;
-        height: 350px;
-        overflow: hidden;
-    }
-
-    .sun-background {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,50,0.2) 100%);
-        border-radius: 0 0 50% 50%;
-    }
-
-    .sun-path {
-        position: absolute;
-        width: 700px;
-        height: 700px;
-        bottom: 0;
-        border-radius: 50%;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-bottom: none;
-        clip-path: polygon(0 50%, 100% 50%, 100% 100%, 0 100%);
-    }
-
-    .sun-marker {
-        position: absolute;
-        width: 40px;
-        height: 40px;
-        background: #ffcc00;
-        border-radius: 50%;
-        box-shadow: 0 0 30px rgba(255, 204, 0, 0.8);
-        transform: translate(-50%, -50%);
-        z-index: 2;
-    }
-
-    .sun-time {
-        position: absolute;
-        font-size: 1.8rem;
-        color: rgba(255, 255, 255, 0.9);
-        font-weight: 300;
-        background: rgba(0, 0, 0, 0.5);
-        padding: 5px 10px;
-        border-radius: 10px;
-        text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-    }
-
-    .sun-label {
-        position: absolute;
-        font-size: 1.8rem;
-        color: rgba(255, 255, 255, 0.7);
-        font-weight: 300;
-    }
-
-    .sun-info {
-        font-size: 2.2rem;
-        opacity: 0.8;
-        margin-top: 1rem;
-        font-weight: 300;
-    }
-
-    .sun-glow {
-        position: absolute;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(255,204,0,0.3) 0%, rgba(255,204,0,0) 70%);
-        animation: pulse 4s infinite ease-in-out;
-    }
-
-    .horizon-line {
-        position: absolute;
-        width: 100%;
-        height: 1px;
-        background: rgba(255, 255, 255, 0.3);
-        bottom: 50%;
-        z-index: 1;
-    }
-
-    .time-markers {
-        position: absolute;
-        width: 100%;
-        height: 20px;
-        bottom: 0;
-        display: flex;
-        justify-content: space-between;
-        padding: 0 20px;
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 1.2rem;
-    }
-
-    /* Photo Module */
+    /* Photo Module - Completely Redesigned */
     .photo-module {
-        perspective: 1000px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      perspective: 1200px;
     }
 
-    .polaroid-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        width: 100%;
-        height: 100%;
-        perspective: 1000px;
-        transform-style: preserve-3d;
+    .photo-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    .polaroid {
-        background: #fff;
-        padding: 30px 30px 100px 30px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        transform-style: preserve-3d;
-        transition: transform 1s ease;
-        position: absolute;
-        max-width: 90%;
-        max-height: 90%;
-        transform: rotateZ(var(--rotate)) translateZ(var(--z));
+    .photo-showcase {
+      position: relative;
+      width: 80vmin;
+      height: 80vmin;
+      transform-style: preserve-3d;
     }
 
-    .polaroid.active {
-        z-index: 5;
+    .photo-frame {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transform: translateZ(-500px) rotateY(0deg);
+      transition: opacity 1s ease, transform 1.5s cubic-bezier(0.23, 1, 0.32, 1);
     }
 
-    .polaroid-img {
-        display: block;
-        max-width: 100%;
-        max-height: 70vh;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    .photo-frame.active {
+      opacity: 1;
+      transform: translateZ(0) rotateY(0deg);
+      z-index: 10;
     }
 
-    .polaroid-caption {
-        font-family: 'Playfair Display', serif;
-        color: #333;
-        font-size: 2rem;
-        margin-top: 15px;
-        text-align: center;
-        position: absolute;
-        bottom: 30px;
-        left: 0;
-        width: 100%;
-        padding: 0 30px;
+    .photo-frame.prev {
+      opacity: 0;
+      transform: translateZ(-500px) rotateY(-60deg);
+      z-index: 1;
     }
 
-    /* Music Module - Redesigned to be non-interactive and visually engaging */
+    .photo-frame.next {
+      opacity: 0;
+      transform: translateZ(-500px) rotateY(60deg);
+      z-index: 1;
+    }
+
+    .photo-image-container {
+      position: relative;
+      width: 70vmin;
+      height: 50vmin;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      background: rgba(0, 0, 0, 0.3);
+      transform-style: preserve-3d;
+    }
+
+    .photo-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 10s ease;
+      transform: scale(1);
+    }
+
+    .photo-frame.active .photo-image {
+      transform: scale(1.05);
+    }
+
+    .photo-info {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      padding: 3vmin;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+      transform: translateY(0);
+    }
+
+    .photo-title {
+      font-family: var(--font-display);
+      font-size: 2.5vmin;
+      margin-bottom: 1vmin;
+      color: var(--color-accent);
+      letter-spacing: 0.2em;
+    }
+
+    .photo-description {
+      font-size: 1.8vmin;
+      opacity: 0.8;
+      max-width: 80%;
+    }
+
+    .photo-counter {
+      position: absolute;
+      bottom: 10%;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: 1.5vmin;
+      color: rgba(255, 255, 255, 0.5);
+      letter-spacing: 0.5em;
+    }
+
+    .photo-progress {
+      position: absolute;
+      bottom: 8%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20vmin;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .photo-progress-bar {
+      height: 100%;
+      width: 0;
+      background: var(--color-accent);
+      transition: width 0.5s linear;
+    }
+
+    /* Music Module */
     .music-module {
-        text-align: center;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
     }
 
     .music-container {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-    }
-
-    .music-visualization {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
+      position: relative;
+      width: 80vmin;
+      height: 60vmin;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
     .album-art {
-        position: relative;
-        width: 300px;
-        height: 300px;
-        border-radius: 20px;
-        overflow: hidden;
-        box-shadow: 0 0 50px rgba(255, 255, 255, 0.2);
-        z-index: 2;
-        transform-style: preserve-3d;
-        transform: translateZ(50px);
-        transition: transform 1s ease, box-shadow 1s ease;
+      position: relative;
+      width: 40vmin;
+      height: 40vmin;
+      overflow: hidden;
+      box-shadow: 0 0 50px rgba(0, 229, 255, 0.2);
+      z-index: 2;
+      transform-style: preserve-3d;
+      transform: translateZ(50px);
+      transition: transform var(--transition-medium), box-shadow var(--transition-medium);
+      border: 1px solid rgba(0, 229, 255, 0.2);
     }
 
     .album-art img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 10s ease;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 10s ease;
     }
 
     .music-info {
-        position: relative;
-        margin-top: 2rem;
-        text-align: center;
-        z-index: 2;
-        transform-style: preserve-3d;
-        transform: translateZ(30px);
+      position: relative;
+      margin-top: 4vmin;
+      text-align: center;
+      z-index: 2;
+      transform-style: preserve-3d;
+      transform: translateZ(30px);
     }
 
     .song-title {
-        font-size: 3.5rem;
-        font-weight: 300;
-        margin-bottom: 0.5rem;
-        background: linear-gradient(to right, #ff00ff, #00ffff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+      font-family: var(--font-display);
+      font-size: 3vmin;
+      font-weight: 400;
+      margin-bottom: 1vmin;
+      color: var(--color-accent);
+      text-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+      letter-spacing: 0.1em;
     }
 
     .artist-name {
-        font-size: 2.5rem;
-        opacity: 0.9;
-        margin-bottom: 0.5rem;
-        font-weight: 300;
-        text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+      font-size: 2.5vmin;
+      opacity: 0.9;
+      margin-bottom: 1vmin;
+      font-weight: 300;
     }
 
     .album-name {
-        font-size: 1.8rem;
-        opacity: 0.7;
-        font-weight: 300;
+      font-size: 2vmin;
+      opacity: 0.7;
+      font-weight: 300;
     }
 
-    .music-particles {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 1;
-        pointer-events: none;
+    .music-visualizer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 10vmin;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      z-index: 1;
     }
 
-    /* Transitions and animations */
-    @keyframes rotate3d {
-        0% {
-            transform: rotateX(60deg) rotateY(0deg);
-        }
-        100% {
-            transform: rotateX(60deg) rotateY(360deg);
-        }
+    .visualizer-bar {
+      width: 0.5vmin;
+      height: 2vmin;
+      background-color: var(--color-accent);
+      margin: 0 0.25vmin;
+      border-radius: 1px;
+      transition: height var(--transition-fast);
     }
 
-    @keyframes rotate3d-reverse {
-        0% {
-            transform: rotateX(60deg) rotateY(360deg);
-        }
-        100% {
-            transform: rotateX(60deg) rotateY(0deg);
-        }
+    /* Data Visualization Module - Completely Redesigned */
+    .data-module {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      perspective: 1500px;
     }
 
-    @keyframes pulse {
-        0% {
-            transform: scale(1);
-            opacity: 0.7;
-        }
-        50% {
-            transform: scale(1.05);
-            opacity: 0.9;
-        }
-        100% {
-            transform: scale(1);
-            opacity: 0.7;
-        }
+    .data-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
-    @keyframes float {
-        0% {
-            transform: translateY(0px) translateX(0px);
-        }
-        50% {
-            transform: translateY(-10px) translateX(10px);
-        }
-        100% {
-            transform: translateY(0px) translateX(0px);
-        }
+    .nexus-digital {
+      position: relative;
+      width: 80vmin;
+      height: 80vmin;
+      transform-style: preserve-3d;
+      transform: rotateX(20deg) rotateY(0deg);
+      animation: rotate-slow 60s infinite linear;
     }
 
-    @keyframes rain {
-        0% {
-            transform: translateY(0) translateX(0);
-            opacity: 0;
-        }
-        50% {
-            opacity: 1;
-        }
-        100% {
-            transform: translateY(50px) translateX(20px);
-            opacity: 0;
-        }
+    .nexus-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 229, 255, 0.2);
+      transform-style: preserve-3d;
     }
 
-    /* Notification */
-    .notification {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: rgba(0, 0, 0, 0.7);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        padding: 10px 20px;
-        color: white;
-        font-size: 1.5rem;
-        opacity: 0;
-        transition: opacity 0.5s ease;
-        z-index: 1000;
+    .nexus-core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 15vmin;
+      height: 15vmin;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 229, 255, 0.3) 0%, rgba(0, 229, 255, 0) 70%);
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 30px rgba(0, 229, 255, 0.5);
+      animation: pulse 4s infinite ease-in-out;
     }
 
-    .notification.show {
+    .nexus-beam {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      height: 1px;
+      background: linear-gradient(90deg, rgba(0, 229, 255, 0) 0%, rgba(0, 229, 255, 0.8) 50%, rgba(0, 229, 255, 0) 100%);
+      transform-origin: left center;
+      transform: rotate(0deg);
+    }
+
+    .nexus-node {
+      position: absolute;
+      width: 2vmin;
+      height: 2vmin;
+      border-radius: 50%;
+      background-color: var(--color-accent);
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.7);
+    }
+
+    .nexus-pulse {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 1px solid var(--color-accent);
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 1;
+      animation: nexus-pulse 3s infinite ease-out;
+    }
+
+    .nexus-info {
+      position: absolute;
+      padding: 1vmin 2vmin;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(0, 229, 255, 0.3);
+      color: var(--color-accent);
+      font-family: var(--font-display);
+      font-size: 1.5vmin;
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.5s ease;
+      pointer-events: none;
+    }
+
+    .nexus-info.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .nexus-title {
+      position: absolute;
+      top: 10%;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: 3vmin;
+      color: var(--color-accent);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+    }
+
+    @keyframes rotate-slow {
+      0% {
+        transform: rotateX(20deg) rotateY(0deg);
+      }
+      100% {
+        transform: rotateX(20deg) rotateY(360deg);
+      }
+    }
+
+    @keyframes nexus-pulse {
+      0% {
+        transform: translate(-50%, -50%) scale(0);
         opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0;
+      }
     }
 
     /* Loading indicator */
     .loading {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        background: #000;
-        transition: opacity 1s ease;
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      background: var(--color-bg);
+      transition: opacity 1s ease;
     }
 
     .loading.hidden {
-        opacity: 0;
-        pointer-events: none;
+      opacity: 0;
+      pointer-events: none;
     }
 
-    .loading-circle {
-        position: relative;
-        width: 150px;
-        height: 150px;
-        margin-bottom: 30px;
+    .loading-spinner {
+      position: relative;
+      width: 15vmin;
+      height: 15vmin;
+      margin-bottom: 5vmin;
     }
 
-    .loading-circle:before,
-    .loading-circle:after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        border: 2px solid transparent;
-        border-top-color: #00ffff;
-        border-bottom-color: #ff00ff;
-        animation: spin 1.5s linear infinite;
+    .spinner-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      border-top-color: var(--color-accent);
+      border-bottom-color: var(--color-accent-alt);
+      animation: spin 1.5s linear infinite;
     }
 
-    .loading-circle:after {
-        border-top-color: #ff00ff;
-        border-bottom-color: #00ffff;
-        animation-duration: 2s;
+    .spinner-ring:nth-child(2) {
+      width: 80%;
+      height: 80%;
+      top: 10%;
+      left: 10%;
+      border-top-color: var(--color-accent-alt);
+      border-bottom-color: var(--color-accent);
+      animation-duration: 2s;
+      animation-direction: reverse;
+    }
+
+    .spinner-ring:nth-child(3) {
+      width: 60%;
+      height: 60%;
+      top: 20%;
+      left: 20%;
+      animation-duration: 1s;
     }
 
     .loading-text {
-        font-size: 2rem;
-        color: #fff;
-        font-weight: 300;
-        letter-spacing: 3px;
+      font-family: var(--font-display);
+      font-size: 3vmin;
+      color: var(--color-accent);
+      font-weight: 400;
+      letter-spacing: 0.5em;
+      text-transform: uppercase;
     }
 
     @keyframes spin {
-        to { transform: rotate(360deg); }
+      to { transform: rotate(360deg); }
     }
 
-    /* Debug panel */
-    #debug-panel {
-        position: fixed;
-        bottom: 10px;
-        right: 10px;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        padding: 10px;
-        border-radius: 5px;
-        font-size: 12px;
-        z-index: 9999;
-        max-width: 300px;
-        max-height: 200px;
-        overflow: auto;
+    /* Responsive adjustments */
+    @media (max-aspect-ratio: 1/1) {
+      .photo-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: repeat(6, 1fr);
+      }
     }
-</style>
+
+    /* Glitch effect */
+    .glitch {
+      position: relative;
+      animation: glitch-skew 1s infinite linear alternate-reverse;
+    }
+
+    .glitch::before,
+    .glitch::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.8;
+    }
+
+    .glitch::before {
+      color: var(--color-accent);
+      animation: glitch-anim 5s infinite linear alternate-reverse;
+    }
+
+    .glitch::after {
+      color: var(--color-accent-alt);
+      animation: glitch-anim2 1s infinite linear alternate-reverse;
+    }
+
+    @keyframes glitch-anim {
+      0% {
+        clip-path: inset(80% 0 0 0);
+        transform: translate(-0.2em, -0.04em);
+      }
+      10% {
+        clip-path: inset(10% 0 85% 0);
+        transform: translate(0.13em, -0.06em);
+      }
+      20% {
+        clip-path: inset(80% 0 0 0);
+        transform: translate(-0.09em, 0.04em);
+      }
+      30% {
+        clip-path: inset(10% 0 85% 0);
+        transform: translate(0.06em, 0.08em);
+      }
+      40% {
+        clip-path: inset(50% 0 30% 0);
+        transform: translate(0.07em, 0.03em);
+      }
+      50% {
+        clip-path: inset(10% 0 85% 0);
+        transform: translate(-0.09em, -0.08em);
+      }
+      60% {
+        clip-path: inset(40% 0 43% 0);
+        transform: translate(-0.18em, -0.02em);
+      }
+      70% {
+        clip-path: inset(80% 0 5% 0);
+        transform: translate(0.13em, 0.05em);
+      }
+      80% {
+        clip-path: inset(10% 0 85% 0);
+        transform: translate(-0.09em, -0.06em);
+      }
+      90% {
+        clip-path: inset(90% 0 1% 0);
+        transform: translate(0.13em, 0.07em);
+      }
+      100% {
+        clip-path: inset(5% 0 80% 0);
+        transform: translate(-0.13em, -0.04em);
+      }
+    }
+
+    @keyframes glitch-anim2 {
+      0% {
+        clip-path: inset(20% 0 60% 0);
+        transform: translate(-0.1em, 0.06em);
+      }
+      20% {
+        clip-path: inset(60% 0 10% 0);
+        transform: translate(0.1em, -0.06em);
+      }
+      40% {
+        clip-path: inset(40% 0 40% 0);
+        transform: translate(-0.1em, -0.02em);
+      }
+      60% {
+        clip-path: inset(5% 0 70% 0);
+        transform: translate(0.1em, 0.06em);
+      }
+      80% {
+        clip-path: inset(80% 0 10% 0);
+        transform: translate(-0.1em, -0.06em);
+      }
+      100% {
+        clip-path: inset(10% 0 60% 0);
+        transform: translate(0.1em, 0.06em);
+      }
+    }
+
+    @keyframes glitch-skew {
+      0% {
+        transform: skew(0deg);
+      }
+      20% {
+        transform: skew(0deg);
+      }
+      24% {
+        transform: skew(3deg);
+      }
+      28% {
+        transform: skew(0deg);
+      }
+      70% {
+        transform: skew(0deg);
+      }
+      74% {
+        transform: skew(-2deg);
+      }
+      78% {
+        transform: skew(0deg);
+      }
+      100% {
+        transform: skew(0deg);
+      }
+    }
+
+    /* Noise effect */
+    .noise {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 9;
+      opacity: 0.03;
+      pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    /* Scan line effect */
+    .scanlines {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 8;
+      pointer-events: none;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 50%, rgba(0, 0, 0, 0.02) 50%);
+      background-size: 100% 4px;
+    }
+
+    /* Vignette effect */
+    .vignette {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 7;
+      pointer-events: none;
+      background: radial-gradient(circle, transparent 60%, rgba(0, 0, 0, 0.5) 100%);
+    }
+  </style>
 </head>
 <body>
-<div class="loading" id="loading">
-    <div class="loading-circle"></div>
-    <div class="loading-text">NEXUS TEMPORAL</div>
-</div>
+  <div class="loading" id="loading">
+    <div class="loading-spinner">
+      <div class="spinner-ring"></div>
+      <div class="spinner-ring"></div>
+      <div class="spinner-ring"></div>
+    </div>
+    <div class="loading-text glitch" data-text="CHRONOS NEXUS">CHRONOS NEXUS</div>
+  </div>
 
-<div id="debug-panel" style="display: none;"></div>
+  <audio id="background-music" loop></audio>
 
-<!-- Audio element para reproducción automática -->
-<audio id="background-music" loop></audio>
+  <div class="canvas-container">
+    <canvas id="background-canvas"></canvas>
+    <canvas id="particles-canvas"></canvas>
+  </div>
 
-<div class="container">
-    <div id="canvas-container">
-        <canvas id="background-canvas"></canvas>
-        <canvas id="fluid-canvas"></canvas>
-        <canvas id="particle-canvas"></canvas>
+  <div class="nexus-container">
+    <!-- Time Module -->
+    <div class="module time-module" id="time-module">
+      <div class="time-container">
+        <div class="time-display glitch" id="time" data-text="00:00">00:00</div>
+        <div class="date-display" id="date">Lunes, 1 de Enero</div>
+        <div id="time-rings"></div>
+        <div class="time-grid" id="time-grid"></div>
+      </div>
     </div>
 
-    <div class="interface">
-        <!-- Welcome Module -->
-        <div class="module welcome-module" id="welcome-module">
-            <div class="welcome-container">
-                <div class="welcome-bg"></div>
-                <div class="welcome-heart">❤</div>
-                <div class="welcome-title">Bienvenidxs</div>
-                <div class="welcome-subtitle">al hogar de Alan & Vic</div>
-            </div>
+    <!-- Weather Module -->
+    <div class="module weather-module" id="weather-module">
+      <div class="weather-container">
+        <div class="weather-display">
+          <div class="temp-display glitch" id="temperature" data-text="--°C">--°C</div>
+          <div class="weather-condition" id="weather-condition">Cargando...</div>
+          <div class="location-display">Ciudad Obregón, Sonora</div>
         </div>
-
-        <!-- Time Module -->
-        <div class="module time-module" id="time-module">
-            <div class="time-container">
-                <div class="time-ring ring-1"></div>
-                <div class="time-ring ring-2"></div>
-                <div class="time-ring ring-3"></div>
-                <div class="time-circle-core">
-                    <div class="time-display" id="time">12:00</div>
-                    <div class="date-display" id="date">Lunes, 1 de Enero</div>
-                </div>
-                <svg class="time-progress" viewBox="0 0 100 100">
-                    <circle id="seconds-progress" cx="50" cy="50" r="48" fill="none" stroke="rgba(0, 212, 255, 0.3)" stroke-width="1" stroke-dasharray="302" stroke-dashoffset="302" transform="rotate(-90 50 50)"/>
-                    <circle id="minutes-progress" cx="50" cy="50" r="44" fill="none" stroke="rgba(0, 212, 255, 0.5)" stroke-width="1" stroke-dasharray="276" stroke-dashoffset="276" transform="rotate(-90 50 50)"/>
-                    <circle id="hours-progress" cx="50" cy="50" r="40" fill="none" stroke="rgba(0, 212, 255, 0.7)" stroke-width="2" stroke-dasharray="251" stroke-dashoffset="251" transform="rotate(-90 50 50)"/>
-                </svg>
-            </div>
-        </div>
-
-        <!-- Weather Module -->
-        <div class="module weather-module" id="weather-module">
-            <div class="weather-container">
-                <div class="weather-hexagon">
-                    <div class="hex-container">
-                        <div class="hex-bg"></div>
-                        <div class="hex-inner">
-                            <div class="temp-display" id="temperature">--°C</div>
-                            <div class="weather-condition" id="weather-condition">Cargando...</div>
-                            <div class="location-display">Ciudad Obregón, Sonora</div>
-                        </div>
-                        <div id="weather-icon" class="weather-icon"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quote Module -->
-        <div class="module quote-module" id="quote-module">
-            <div class="quote-container">
-                <div class="quote-decoration">"</div>
-                <div class="quote-text" id="quote-text"></div>
-                <div class="quote-author" id="quote-author"></div>
-            </div>
-        </div>
-
-        <!-- Sun Module -->
-        <div class="module sun-module" id="sun-module">
-            <div class="sun-container">
-                <div class="sun-title">Ciclo Solar de Ciudad Obregón</div>
-                <div class="sun-arc-container">
-                    <div class="horizon-line"></div>
-                    <div class="sun-arc">
-                        <div class="sun-background"></div>
-                        <div class="sun-path"></div>
-                        <div class="sun-marker" id="sun-marker"></div>
-                        <div class="sun-time" id="sunrise-time" style="left: 20px; bottom: 10px;">--:--</div>
-                        <div class="sun-time" id="sunset-time" style="right: 20px; bottom: 10px;">--:--</div>
-                        <div class="sun-label" style="left: 20px; bottom: -40px;">Amanecer</div>
-                        <div class="sun-label" style="right: 20px; bottom: -40px;">Atardecer</div>
-                        <div class="sun-glow" style="width: 200px; height: 200px; bottom: -150px; left: 350px; transform: translateX(-50%);"></div>
-                    </div>
-                </div>
-                <div class="sun-info" id="sun-info">Ciclo solar de Ciudad Obregón</div>
-            </div>
-        </div>
-
-        <!-- Photo Module -->
-        <div class="module photo-module" id="photo-module">
-            <div class="polaroid-container" id="polaroid-container">
-                <!-- Polaroid photos will be added here dynamically -->
-            </div>
-        </div>
-
-        <!-- Music Module -->
-        <div class="module music-module" id="music-module">
-            <div class="music-container">
-                <div class="music-visualization" id="music-visualization"></div>
-                <div class="album-art">
-                    <img id="album-cover-img" src="img/default-album.jpg" alt="Portada del álbum">
-                </div>
-                <div class="music-info">
-                    <div class="song-title" id="song-title">Cargando...</div>
-                    <div class="artist-name" id="artist-name">Artista</div>
-                    <div class="album-name" id="album-name">Álbum</div>
-                </div>
-                <div class="music-particles" id="music-particles"></div>
-            </div>
-        </div>
+        <div class="weather-particles" id="weather-particles"></div>
+      </div>
     </div>
 
-    <div class="notification" id="notification" style="display: none;"></div>
-</div>
+    <!-- Quote Module -->
+    <div class="module quote-module" id="quote-module">
+      <div class="quote-container">
+        <div class="quote-decoration">"</div>
+        <div class="quote-text" id="quote-text"></div>
+        <div class="quote-author" id="quote-author"></div>
+      </div>
+    </div>
 
-<script>
-    // Función para registrar mensajes de depuración
-    function debug(message) {
-        const debugPanel = document.getElementById('debug-panel');
-        if (debugPanel) {
-            const time = new Date().toLocaleTimeString();
-            debugPanel.innerHTML += `<div>[${time}] ${message}</div>`;
-            debugPanel.scrollTop = debugPanel.scrollHeight;
-        }
-        console.log(message);
-    }
+    <!-- Photo Module - Completely Redesigned -->
+    <div class="module photo-module" id="photo-module">
+      <div class="photo-container">
+        <div class="photo-showcase" id="photo-showcase">
+          <!-- Photo frames will be added dynamically -->
+        </div>
+        <div class="photo-counter" id="photo-counter">01 / 09</div>
+        <div class="photo-progress">
+          <div class="photo-progress-bar" id="photo-progress-bar"></div>
+        </div>
+      </div>
+    </div>
 
-    // ===== INITIALIZATION =====
-    let currentTheme = 0;
-    let currentModule = 0;
-    let weatherData = null;
-    let fluidParticles = [];
-    let backgroundParticles = [];
-    let polaroidIndex = 0;
-    let polaroids = [];
-    let themeTransitionInProgress = false;
-    let currentAudio = null;
-    let currentTrackIndex = 0;
-    
-    const themes = [
-        { primary: '#00d4ff', secondary: '#ff00ff', name: 'Crepúsculo Digital' },   // Cyan to Magenta
-        { primary: '#ff3300', secondary: '#ffcc00', name: 'Amanecer Cósmico' },     // Red to Yellow
-        { primary: '#00ff66', secondary: '#00ffcc', name: 'Aurora Boreal' },        // Green to Teal
-        { primary: '#ff0066', secondary: '#ffcc00', name: 'Nebulosa Estelar' }      // Pink to Yellow
-    ];
-    
-    const modules = ['welcome-module', 'time-module', 'weather-module', 'quote-module', 'sun-module', 'photo-module', 'music-module'];
-    const moduleDuration = 20000; // 20 seconds per module
-    const themeDuration = 60000;  // 1 minute per theme
+    <!-- Music Module -->
+    <div class="module music-module" id="music-module">
+      <div class="music-container">
+        <div class="album-art">
+          <img id="album-cover-img" src="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=2070&auto=format&fit=crop" alt="Portada del álbum">
+        </div>
+        <div class="music-info">
+          <div class="song-title glitch" id="song-title" data-text="CARGANDO...">CARGANDO...</div>
+          <div class="artist-name" id="artist-name">Artista</div>
+          <div class="album-name" id="album-name">Álbum</div>
+        </div>
+        <div class="music-visualizer" id="music-visualizer">
+          <!-- Visualizer bars will be added here dynamically -->
+        </div>
+      </div>
+    </div>
 
-    // Playlist de música
-    const playlist = [
+    <!-- Data Visualization Module - Completely Redesigned -->
+    <div class="module data-module" id="data-module">
+      <div class="data-container">
+        <div class="nexus-title">NEXUS DIGITAL</div>
+        <div class="nexus-digital" id="nexus-digital">
+          <div class="nexus-core"></div>
+          <!-- Layers, beams and nodes will be added dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visual effects layers -->
+  <div class="noise"></div>
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+
+  <script>
+    // ===== CONFIGURATION =====
+    const CONFIG = {
+      modules: [
+        'time-module',
+        'weather-module', 
+        'quote-module', 
+        'photo-module', 
+        'music-module',
+        'data-module'
+      ],
+      moduleDuration: 30000, // 30 seconds per module
+      
+      // Background configuration
+      background: {
+        color1: '#080808',
+        color2: '#121212',
+        noiseIntensity: 0.05,
+        speed: 0.002
+      },
+      
+      // Particle system configuration
+      particles: {
+        count: 150,
+        minSize: 1,
+        maxSize: 3,
+        speed: 0.3,
+        connectionDistance: 150,
+        color: '#00e5ff'
+      },
+      
+      // Music playlist
+      playlist: [
         {
-            title: "Deep & Groovy Smooth Jazz House DJ Mix",
-            artist: "UKDD",
-            album: "Cozy Sundown Vibes",
-            cover: "img/Cozy-Sundown-Vibes.jpg",
-            file: "mp3/Cozy-Sundown-Vibes.mp3"
+          title: "ECLIPSE",
+          artist: "Einaudi & Richter",
+          album: "Ambient Reflections",
+          cover: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=2070&auto=format&fit=crop",
+          file: "mp3/Cozy-Sundown-Vibes.mp3"
         },
         {
-            title: "Funky & Deep Jazz House DJ Mix",
-            artist: "UKDD",
-            album: "Spring Sunset Vibes",
-            cover: "img/Spring-Sunset-Vibes.jpg",
-            file: "mp3/Spring-Sunset-Vibes.mp3"
+          title: "AURORA",
+          artist: "Nils Frahm",
+          album: "Spaces Between",
+          cover: "https://images.unsplash.com/photo-1559657693-e816ff3bd9af?q=80&w=2069&auto=format&fit=crop",
+          file: "mp3/Spring-Sunset-Vibes.mp3"
         },
         {
-            title: "Summer Nostalgia DJ Mix",
-            artist: "RAMMOR",
-            album: "Do you miss summer?",
-            cover: "img/Spring-Sunset-Vibes.jpg",
-            file: "mp3/Spring-Sunset-Vibes.mp3"
+          title: "QUANTUM",
+          artist: "Ólafur Arnalds",
+          album: "Digital Echoes",
+          cover: "https://images.unsplash.com/photo-1566345984367-8efab196ad12?q=80&w=1974&auto=format&fit=crop",
+          file: "mp3/Summer-Nostalgia.mp3"
         }
+      ],
+      
+      // Photo gallery - Enhanced with more metadata
+      photos: [
+        {
+          url: "img/image1.png",
+          title: "NEBULA PRIME",
+          description: "Formación estelar en el sector Gamma-9",
+          featured: true,
+          category: "space"
+        },
+        {
+          url: "img/image2.png",
+          title: "AURORA BOREALIS",
+          description: "Fenómeno lumínico en la atmósfera polar",
+          featured: false,
+          category: "nature"
+        },
+        {
+          url: "img/image3.png",
+          title: "SOLAR FLARE",
+          description: "Erupción de plasma en la corona solar",
+          featured: false,
+          category: "space"
+        },
+        {
+          url: "img/image4.png",
+          title: "QUANTUM FIELD",
+          description: "Visualización de partículas subatómicas",
+          featured: false,
+          category: "abstract"
+        },
+        {
+          url: "img/image5.jpg",
+          title: "BINARY SYSTEM",
+          description: "Estrellas binarias en órbita sincronizada",
+          featured: true,
+          category: "space"
+        },
+        {
+          url: "img/image6.jpg",
+          title: "NORTHERN LIGHTS",
+          description: "Danza de partículas ionizadas",
+          featured: false,
+          category: "nature"
+        },
+        {
+          url: "img/image7.jpg",
+          title: "COSMIC DUST",
+          description: "Partículas interestelares en suspensión",
+          featured: false,
+          category: "space"
+        },
+        {
+          url: "img/image8.jpg",
+          title: "GRADIENT FIELD",
+          description: "Espectro cromático en dimensión fractal",
+          featured: false,
+          category: "abstract"
+        },
+        {
+          url: "img/image9.jpg",
+          title: "DEEP SPACE",
+          description: "Exploración del vacío interestelar",
+          featured: true,
+          category: "space"
+        }
+      ],
+      
+      // Quotes collection
+      quotes: [
+        { 
+          quote: "El tiempo es una ilusión, y el futuro no existe hasta que lo creamos.", 
+          author: "CHRONOS PROJECT" 
+        },
+        { 
+          quote: "La realidad es simplemente una serie de ecuaciones esperando ser resueltas.", 
+          author: "QUANTUM DIVISION" 
+        },
+        { 
+          quote: "En el espacio entre los átomos existe todo lo que somos y todo lo que seremos.", 
+          author: "PARTICLE THEORY" 
+        },
+        { 
+          quote: "La tecnología avanzada es indistinguible de la magia para aquellos que no la comprenden.", 
+          author: "NEXUS PROTOCOL" 
+        },
+        { 
+          quote: "Somos polvo de estrellas contemplando el universo que nos creó.", 
+          author: "COSMIC AWARENESS" 
+        },
+        { 
+          quote: "El arte digital es la fusión perfecta entre la lógica matemática y la expresión humana.", 
+          author: "CREATIVE ALGORITHM" 
+        },
+        { 
+          quote: "La simplicidad es la máxima sofisticación en un universo de complejidad infinita.", 
+          author: "DESIGN MATRIX" 
+        },
+        { 
+          quote: "La creatividad es la inteligencia divirtiéndose en los límites de lo posible.", 
+          author: "NEURAL NETWORK" 
+        },
+        { 
+          quote: "El silencio digital es el lienzo en blanco de la era de la información.", 
+          author: "DATA VOID" 
+        },
+        { 
+          quote: "La música es matemática emocional resonando en el espacio-tiempo.", 
+          author: "HARMONIC SEQUENCE" 
+        }
+      ],
+      
+      // Data visualization
+      dataPoints: 150
+    };
 
-    ];
-
-// ===== PHOTO SYSTEM =====
-const polaroidImages = [
-  { url: "img/image1.png", caption: "Naturaleza" },
-  { url: "img/image2.png", caption: "Ciudad" },
-  { url: "img/image3.png", caption: "Atardecer" },
-  { url: "img/image4.png", caption: "Amanecer" },
-  { url: "img/image5.png", caption: "Montañas" },
-  // Add more local images as needed
-];
-
+    // ===== STATE MANAGEMENT =====
+    let state = {
+      currentModule: 0,
+      weatherData: null,
+      particles: [],
+      photoItems: [],
+      currentTrackIndex: 0,
+      audioContext: null,
+      audioAnalyser: null,
+      audioSource: null,
+      audioData: null,
+      visualizerBars: [],
+      dataPoints: [],
+      dataConnections: [],
+      timeRings: [],
+      noiseOffset: 0,
+      photoFrames: [],
+      currentPhotoIndex: 0,
+      nexusLayers: [],
+      nexusNodes: [],
+      nexusBeams: []
+    };
 
     // ===== CANVAS SETUP =====
     const backgroundCanvas = document.getElementById('background-canvas');
     const backgroundCtx = backgroundCanvas.getContext('2d');
-    const fluidCanvas = document.getElementById('fluid-canvas');
-    const fluidCtx = fluidCanvas.getContext('2d');
-    const particleCanvas = document.getElementById('particle-canvas');
-    const particleCtx = particleCanvas.getContext('2d');
+    const particlesCanvas = document.getElementById('particles-canvas');
+    const particlesCtx = particlesCanvas.getContext('2d');
 
     function resizeCanvas() {
-        try {
-            backgroundCanvas.width = window.innerWidth;
-            backgroundCanvas.height = window.innerHeight;
-            fluidCanvas.width = window.innerWidth;
-            fluidCanvas.height = window.innerHeight;
-            particleCanvas.width = window.innerWidth;
-            particleCanvas.height = window.innerHeight;
-            debug("Canvas resized successfully");
-        } catch (error) {
-            debug("Error resizing canvas: " + error.message);
-        }
+      backgroundCanvas.width = window.innerWidth;
+      backgroundCanvas.height = window.innerHeight;
+      particlesCanvas.width = window.innerWidth;
+      particlesCanvas.height = window.innerHeight;
+      
+      // Reinitialize particles when canvas is resized
+      initParticles();
     }
 
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
 
-    // ===== TIME AND DATE =====
+    // ===== BACKGROUND EFFECT =====
+    function updateBackground() {
+      const width = backgroundCanvas.width;
+      const height = backgroundCanvas.height;
+      
+      // Create gradient background
+      const gradient = backgroundCtx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, CONFIG.background.color1);
+      gradient.addColorStop(1, CONFIG.background.color2);
+      
+      backgroundCtx.fillStyle = gradient;
+      backgroundCtx.fillRect(0, 0, width, height);
+      
+      // Add subtle animated noise
+      state.noiseOffset += CONFIG.background.speed;
+      
+      // We'll simulate noise with a simple pattern for performance
+      for (let i = 0; i < 100; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * height;
+        const size = Math.random() * 2;
+        const opacity = Math.random() * CONFIG.background.noiseIntensity;
+        
+        backgroundCtx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+        backgroundCtx.beginPath();
+        backgroundCtx.arc(x, y, size, 0, Math.PI * 2);
+        backgroundCtx.fill();
+      }
+    }
+
+    // ===== PARTICLES SYSTEM =====
+    function initParticles() {
+      state.particles = [];
+      
+      for (let i = 0; i < CONFIG.particles.count; i++) {
+        state.particles.push({
+          x: Math.random() * particlesCanvas.width,
+          y: Math.random() * particlesCanvas.height,
+          size: CONFIG.particles.minSize + Math.random() * (CONFIG.particles.maxSize - CONFIG.particles.minSize),
+          speedX: (Math.random() - 0.5) * CONFIG.particles.speed,
+          speedY: (Math.random() - 0.5) * CONFIG.particles.speed,
+          opacity: 0.3 + Math.random() * 0.5
+        });
+      }
+    }
+
+    function updateParticles() {
+      particlesCtx.clearRect(0, 0, particlesCanvas.width, particlesCanvas.height);
+      
+      // Draw connections between particles
+      particlesCtx.lineWidth = 1;
+      
+      for (let i = 0; i < state.particles.length; i++) {
+        for (let j = i + 1; j < state.particles.length; j++) {
+          const dx = state.particles[i].x - state.particles[j].x;
+          const dy = state.particles[i].y - state.particles[j].y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          if (distance < CONFIG.particles.connectionDistance) {
+            const opacity = (1 - distance / CONFIG.particles.connectionDistance) * 0.3;
+            particlesCtx.strokeStyle = `rgba(0, 229, 255, ${opacity})`;
+            particlesCtx.beginPath();
+            particlesCtx.moveTo(state.particles[i].x, state.particles[i].y);
+            particlesCtx.lineTo(state.particles[j].x, state.particles[j].y);
+            particlesCtx.stroke();
+          }
+        }
+      }
+      
+      // Update and draw particles
+      state.particles.forEach(particle => {
+        // Update position
+        particle.x += particle.speedX;
+        particle.y += particle.speedY;
+        
+        // Bounce off edges
+        if (particle.x < 0 || particle.x > particlesCanvas.width) {
+          particle.speedX *= -1;
+        }
+        if (particle.y < 0 || particle.y > particlesCanvas.height) {
+          particle.speedY *= -1;
+        }
+        
+        // Draw particle
+        particlesCtx.fillStyle = `rgba(0, 229, 255, ${particle.opacity})`;
+        particlesCtx.beginPath();
+        particlesCtx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        particlesCtx.fill();
+      });
+    }
+
+    // ===== TIME MODULE =====
+    function initTimeModule() {
+      // Create time rings
+      const ringsContainer = document.getElementById('time-rings');
+      ringsContainer.innerHTML = '';
+      state.timeRings = [];
+      
+      const ringCount = 5;
+      for (let i = 0; i < ringCount; i++) {
+        const ring = document.createElement('div');
+        ring.className = 'time-ring';
+        
+        const size = 80 - i * 15;
+        ring.style.width = `${size}vmin`;
+        ring.style.height = `${size}vmin`;
+        
+        // Add rotation animation
+        const direction = i % 2 === 0 ? 'normal' : 'reverse';
+        const duration = 30 + i * 15;
+        ring.style.animation = `spin ${duration}s linear infinite ${direction}`;
+        
+        ringsContainer.appendChild(ring);
+        state.timeRings.push(ring);
+      }
+      
+      // Create time grid
+      const gridContainer = document.getElementById('time-grid');
+      gridContainer.innerHTML = '';
+      
+      // Add horizontal lines
+      for (let i = 0; i < 9; i++) {
+        const line = document.createElement('div');
+        line.className = 'grid-line horizontal-line';
+        line.style.top = `${i * 12.5}%`;
+        gridContainer.appendChild(line);
+      }
+      
+      // Add vertical lines
+      for (let i = 0; i < 9; i++) {
+        const line = document.createElement('div');
+        line.className = 'grid-line vertical-line';
+        line.style.left = `${i * 12.5}%`;
+        gridContainer.appendChild(line);
+      }
+    }
+
     function updateTime() {
-        try {
-            const now = new Date();
-            
-            // Format time (12-hour)
-            let hours = now.getHours();
-            const ampm = hours >= 12 ? 'PM' : 'AM';
-            hours = hours % 12;
-            hours = hours ? hours : 12;
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            const seconds = now.getSeconds();
-            
-            // Update time display
-            document.getElementById('time').textContent = `${hours}:${minutes}`;
-            
-            // Format date
-            const options = { weekday: 'long', day: 'numeric', month: 'long' };
-            const dateString = now.toLocaleDateString('es-MX', options);
-            document.getElementById('date').textContent = dateString;
-            
-            // Update progress circles with smooth transition for seconds
-            const secondsProgress = document.getElementById('seconds-progress');
-            const minutesProgress = document.getElementById('minutes-progress');
-            const hoursProgress = document.getElementById('hours-progress');
-            
-            // Smooth transition for seconds
-            let secondsOffset;
-            if (seconds === 0) {
-                // Animate from 0 to full circle smoothly
-                secondsOffset = 302;
-                secondsProgress.style.transition = 'stroke-dashoffset 0.5s ease-in-out';
-                setTimeout(() => {
-                    secondsProgress.style.transition = 'none';
-                    secondsProgress.setAttribute('stroke-dashoffset', '302');
-                    setTimeout(() => {
-                        secondsProgress.style.transition = 'stroke-dashoffset 59.5s linear';
-                        secondsProgress.setAttribute('stroke-dashoffset', '0');
-                    }, 50);
-                }, 500);
-            } else if (seconds === 1) {
-                // Start the continuous animation
-                secondsOffset = 302 - (seconds / 60) * 302;
-                secondsProgress.style.transition = 'stroke-dashoffset 59s linear';
-                secondsProgress.setAttribute('stroke-dashoffset', '0');
-            } else {
-                // Normal update
-                secondsOffset = 302 - (seconds / 60) * 302;
-                secondsProgress.setAttribute('stroke-dashoffset', secondsOffset);
-            }
-            
-            const minutesOffset = 276 - (minutes / 60) * 276;
-            const hoursOffset = 251 - ((hours % 12) / 12) * 251;
-            
-            minutesProgress.setAttribute('stroke-dashoffset', minutesOffset);
-            hoursProgress.setAttribute('stroke-dashoffset', hoursOffset);
-            
-            // Update sun position if we have weather data
-            if (weatherData) {
-                updateSunPosition(now, weatherData.sys.sunrise, weatherData.sys.sunset);
-            }
-        } catch (error) {
-            debug("Error updating time: " + error.message);
-        }
+      const now = new Date();
+      
+      // Format time (24-hour for futuristic look)
+      const hours = now.getHours().toString().padStart(2, '0');
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      
+      // Update time display
+      const timeElement = document.getElementById('time');
+      timeElement.textContent = `${hours}:${minutes}`;
+      timeElement.setAttribute('data-text', `${hours}:${minutes}`);
+      
+      // Format date
+      const options = { weekday: 'long', day: 'numeric', month: 'long' };
+      const dateString = now.toLocaleDateString('es-MX', options);
+      document.getElementById('date').textContent = dateString.toUpperCase();
+      
+      // Update time rings if needed
+      updateTimeRings(now);
     }
 
-    function updateSunPosition(now, sunrise, sunset) {
-        try {
-            const sunriseTime = new Date(sunrise * 1000);
-            const sunsetTime = new Date(sunset * 1000);
-            
-            // Format times
-            const formatTime = (date) => {
-                let hours = date.getHours();
-                const ampm = hours >= 12 ? 'PM' : 'AM';
-                hours = hours % 12;
-                hours = hours ? hours : 12;
-                const minutes = date.getMinutes().toString().padStart(2, '0');
-                return `${hours}:${minutes} ${ampm}`;
-            };
-            
-            document.getElementById('sunrise-time').textContent = formatTime(sunriseTime);
-            document.getElementById('sunset-time').textContent = formatTime(sunsetTime);
-            
-            // Calculate sun position
-            const sunPath = document.querySelector('.sun-path');
-            const sunMarker = document.getElementById('sun-marker');
-            const pathWidth = sunPath.offsetWidth;
-            
-            const dayStart = sunriseTime.getHours() * 3600 + sunriseTime.getMinutes() * 60;
-            const dayEnd = sunsetTime.getHours() * 3600 + sunsetTime.getMinutes() * 60;
-            const currentTime = now.getHours() * 3600 + now.getMinutes() * 60;
-            
-            let position;
-            if (currentTime < dayStart) {
-                position = 0;
-            } else if (currentTime > dayEnd) {
-                position = 1;
-            } else {
-                position = (currentTime - dayStart) / (dayEnd - dayStart);
-            }
-            
-            // Position the sun marker along the arc
-            const x = position * pathWidth;
-            const y = Math.sin(Math.PI * position) * 100;
-            
-            sunMarker.style.left = `${x}px`;
-            sunMarker.style.bottom = `${y}px`;
-            
-            // Change sun color based on time of day
-            if (position < 0.2) {
-                sunMarker.style.backgroundColor = '#ff7700';
-                sunMarker.style.boxShadow = '0 0 30px rgba(255, 119, 0, 0.8)';
-            } else if (position > 0.8) {
-                sunMarker.style.backgroundColor = '#ff5500';
-                sunMarker.style.boxShadow = '0 0 30px rgba(255, 85, 0, 0.8)';
-            } else {
-                sunMarker.style.backgroundColor = '#ffcc00';
-                sunMarker.style.boxShadow = '0 0 30px rgba(255, 204, 0, 0.8)';
-            }
-
-            // Update sun info text
-            const currentTimeObj = new Date();
-            const sunriseTimeObj = new Date(sunrise * 1000);
-            const sunsetTimeObj = new Date(sunset * 1000);
-
-            let sunInfoText = '';
-            if (currentTimeObj < sunriseTimeObj) {
-                // Before sunrise
-                const diffMs = sunriseTimeObj - currentTimeObj;
-                const diffMins = Math.floor(diffMs / 60000);
-                sunInfoText = `Amanecerá en ${diffMins} minutos`;
-            } else if (currentTimeObj > sunsetTimeObj) {
-                // After sunset
-                sunInfoText = 'El sol se ha puesto';
-            } else {
-                // During day
-                const diffMs = sunsetTimeObj - currentTimeObj;
-                const diffHours = Math.floor(diffMs / 3600000);
-                const diffMins = Math.floor((diffMs % 3600000) / 60000);
-                
-                if (diffHours > 0) {
-                    sunInfoText = `El sol se pondrá en ${diffHours} h ${diffMins} min`;
-                } else {
-                    sunInfoText = `El sol se pondrá en ${diffMins} minutos`;
-                }
-            }
-
-            document.getElementById('sun-info').textContent = sunInfoText;
-        } catch (error) {
-            debug("Error updating sun position: " + error.message);
+    function updateTimeRings(now) {
+      if (!state.timeRings.length) return;
+      
+      const seconds = now.getSeconds();
+      const minutes = now.getMinutes();
+      const hours = now.getHours();
+      
+      // Update ring colors based on time
+      state.timeRings.forEach((ring, index) => {
+        let opacity;
+        let color;
+        
+        switch(index) {
+          case 0: // Seconds ring
+            opacity = 0.1 + (seconds / 60) * 0.3;
+            color = `rgba(0, 229, 255, ${opacity})`;
+            break;
+          case 1: // Minutes ring
+            opacity = 0.1 + (minutes / 60) * 0.3;
+            color = `rgba(255, 0, 170, ${opacity})`;
+            break;
+          case 2: // Hours ring
+            opacity = 0.1 + (hours / 24) * 0.3;
+            color = `rgba(0, 229, 255, ${opacity})`;
+            break;
+          default:
+            opacity = 0.1;
+            color = `rgba(255, 255, 255, ${opacity})`;
         }
+        
+        ring.style.borderColor = color;
+      });
     }
 
-    // ===== WEATHER DATA =====
+    // ===== WEATHER MODULE =====
     async function fetchWeatherData() {
-        try {
-            debug("Fetching weather data...");
-            // Use placeholder weather data instead of API calls to avoid errors
-            usePlaceholderWeatherData();
-            showNotification('Datos meteorológicos actualizados');
-        } catch (error) {
-            debug("Error fetching weather data: " + error.message);
-            usePlaceholderWeatherData();
-        }
-    }
-
-    function updateWeatherDisplay(data) {
-        try {
-            document.getElementById('temperature').textContent = `${Math.round(data.main.temp)}°C`;
-            document.getElementById('weather-condition').textContent = data.weather[0].description.charAt(0).toUpperCase() + data.weather[0].description.slice(1);
-            
-            // Update the weather icon based on the weather condition
-            const weatherIconContainer = document.getElementById('weather-icon');
-            weatherIconContainer.innerHTML = '';
-            
-            const weatherDesc = data.weather[0].description.toLowerCase();
-            const now = new Date();
-            const hours = now.getHours();
-            const isNight = hours >= 20 || hours < 6;
-            
-            if (isNight) {
-                // Night icon
-                weatherIconContainer.className = 'weather-icon icon-moon';
-                
-                // Add stars for night sky
-                for (let i = 0; i < 15; i++) {
-                    const star = document.createElement('div');
-                    star.className = 'icon-stars';
-                    star.style.left = Math.random() * 200 - 50 + 'px';
-                    star.style.top = Math.random() * 200 - 50 + 'px';
-                    star.style.opacity = Math.random() * 0.7 + 0.3;
-                    star.style.animation = `pulse ${Math.random() * 3 + 2}s infinite ease-in-out ${Math.random() * 2}s`;
-                    weatherIconContainer.appendChild(star);
-                }
-                
-                // If cloudy at night
-                if (weatherDesc.includes('nub') || weatherDesc.includes('parcial')) {
-                    const cloud = document.createElement('div');
-                    cloud.className = 'icon-cloud';
-                    cloud.style.width = '120px';
-                    cloud.style.height = '50px';
-                    cloud.style.borderRadius = '50px';
-                    cloud.style.position = 'absolute';
-                    cloud.style.top = '20px';
-                    cloud.style.left = '20px';
-                    cloud.style.opacity = '0.7';
-                    weatherIconContainer.appendChild(cloud);
-                }
-                
-                // If rainy at night
-                if (weatherDesc.includes('lluv') || weatherDesc.includes('llovi') || weatherDesc.includes('precipita')) {
-                    for (let i = 0; i < 8; i++) {
-                        const raindrop = document.createElement('div');
-                        raindrop.className = 'icon-rain';
-                        raindrop.style.left = (10 + i * 15) + 'px';
-                        raindrop.style.top = '70px';
-                        raindrop.style.animationDelay = (i * 0.2) + 's';
-                        weatherIconContainer.appendChild(raindrop);
-                    }
-                }
-            } else if (weatherDesc.includes('sol') || weatherDesc.includes('despejado') || weatherDesc.includes('claro')) {
-                weatherIconContainer.className = 'weather-icon icon-sun';
-            } else if (weatherDesc.includes('nub') || weatherDesc.includes('parcial')) {
-                weatherIconContainer.className = 'weather-icon icon-cloud';
-                
-                // Add a small sun behind for "partly cloudy"
-                if (!weatherDesc.includes('muy') && !weatherDesc.includes('cubiert')) {
-                    const smallSun = document.createElement('div');
-                    smallSun.className = 'icon-sun';
-                    smallSun.style.width = '70px';
-                    smallSun.style.height = '70px';
-                    smallSun.style.position = 'absolute';
-                    smallSun.style.right = '-20px';
-                    smallSun.style.top = '-20px';
-                    weatherIconContainer.appendChild(smallSun);
-                }
-            } else if (weatherDesc.includes('lluv') || weatherDesc.includes('llovi') || weatherDesc.includes('precipita')) {
-                weatherIconContainer.className = 'weather-icon';
-                
-                // Cloud base
-                const cloud = document.createElement('div');
-                cloud.className = 'icon-cloud';
-                cloud.style.width = '120px';
-                cloud.style.height = '50px';
-                cloud.style.borderRadius = '50px';
-                cloud.style.position = 'absolute';
-                cloud.style.top = '0';
-                weatherIconContainer.appendChild(cloud);
-                
-                // Add raindrops
-                for (let i = 0; i < 8; i++) {
-                    const raindrop = document.createElement('div');
-                    raindrop.className = 'icon-rain';
-                    raindrop.style.left = (10 + i * 15) + 'px';
-                    raindrop.style.top = '40px';
-                    raindrop.style.animationDelay = (i * 0.2) + 's';
-                    weatherIconContainer.appendChild(raindrop);
-                }
-            }
-            
-            // Update sun position
-            const currentTime = new Date();
-            updateSunPosition(currentTime, data.sys.sunrise, data.sys.sunset);
-            
-            debug("Weather display updated successfully");
-        } catch (error) {
-            debug("Error updating weather display: " + error.message);
-        }
+      // Use placeholder weather data
+      usePlaceholderWeatherData();
     }
 
     function usePlaceholderWeatherData() {
-        try {
-            // Create placeholder data based on time of day and season
-            const now = new Date();
-            const month = now.getMonth(); // 0-11
-            const hour = now.getHours(); // 0-23
-            
-            // Seasonal temperature adjustments for Ciudad Obregón
-            let baseTemp;
-            if (month >= 5 && month <= 8) { // Summer (Jun-Sep)
-                baseTemp = 35 + Math.random() * 5;
-            } else if (month >= 9 && month <= 10) { // Fall (Oct-Nov)
-                baseTemp = 25 + Math.random() * 5;
-            } else if (month >= 11 || month <= 1) { // Winter (Dec-Feb)
-                baseTemp = 18 + Math.random() * 5;
-            } else { // Spring (Mar-May)
-                baseTemp = 28 + Math.random() * 5;
-            }
-            
-            // Time of day adjustments
-            let tempAdjustment = 0;
-            let weatherDescription = 'cielo despejado';
-            let cloudCover = 10 + Math.random() * 20;
-            
-            if (hour >= 0 && hour < 6) { // Night
-                tempAdjustment = -5;
-                weatherDescription = 'noche despejada';
-                cloudCover = 5 + Math.random() * 10;
-            } else if (hour >= 6 && hour < 12) { // Morning
-                tempAdjustment = -2;
-                weatherDescription = 'parcialmente nublado';
-                cloudCover = 30 + Math.random() * 20;
-            } else if (hour >= 12 && hour < 18) { // Afternoon
-                tempAdjustment = 2;
-                if (Math.random() > 0.7) {
-                    weatherDescription = 'algo nublado';
-                    cloudCover = 40 + Math.random() * 30;
-                } else {
-                    weatherDescription = 'cielo despejado';
-                    cloudCover = 10 + Math.random() * 20;
-                }
-            } else { // Evening
-                tempAdjustment = -1;
-                weatherDescription = 'noche despejada';
-                cloudCover = 20 + Math.random() * 20;
-            }
-            
-            const finalTemp = baseTemp + tempAdjustment;
-            
-            // Create weather data object
-            weatherData = {
-                main: {
-                    temp: finalTemp,
-                    humidity: 30 + Math.random() * 40,
-                    pressure: 1008 + Math.random() * 10
-                },
-                weather: [
-                    { description: weatherDescription }
-                ],
-                wind: {
-                    speed: 1 + Math.random() * 4 // m/s
-                },
-                clouds: {
-                    all: cloudCover
-                },
-                sys: {
-                    sunrise: new Date().setHours(6, 15, 0) / 1000,
-                    sunset: new Date().setHours(19, 45, 0) / 1000
-                }
-            };
-            
-            updateWeatherDisplay(weatherData);
-            debug("Using placeholder weather data");
-        } catch (error) {
-            debug("Error creating placeholder weather data: " + error.message);
+      // Create placeholder data based on time of day and season
+      const now = new Date();
+      const month = now.getMonth(); // 0-11
+      const hour = now.getHours(); // 0-23
+      
+      // Seasonal temperature adjustments for Ciudad Obregón
+      let baseTemp;
+      if (month >= 5 && month <= 8) { // Summer (Jun-Sep)
+        baseTemp = 35 + Math.random() * 5;
+      } else if (month >= 9 && month <= 10) { // Fall (Oct-Nov)
+        baseTemp = 25 + Math.random() * 5;
+      } else if (month >= 11 || month <= 1) { // Winter (Dec-Feb)
+        baseTemp = 18 + Math.random() * 5;
+      } else { // Spring (Mar-May)
+        baseTemp = 28 + Math.random() * 5;
+      }
+      
+      // Time of day adjustments
+      let tempAdjustment = 0;
+      let weatherDescription = 'CIELO DESPEJADO';
+      let cloudCover = 10 + Math.random() * 20;
+      
+      if (hour >= 0 && hour < 6) { // Night
+        tempAdjustment = -5;
+        weatherDescription = 'NOCHE DESPEJADA';
+        cloudCover = 5 + Math.random() * 10;
+      } else if (hour >= 6 && hour < 12) { // Morning
+        tempAdjustment = -2;
+        weatherDescription = 'PARCIALMENTE NUBLADO';
+        cloudCover = 30 + Math.random() * 20;
+      } else if (hour >= 12 && hour < 18) { // Afternoon
+        tempAdjustment = 2;
+        if (Math.random() > 0.7) {
+          weatherDescription = 'ALGO NUBLADO';
+          cloudCover = 40 + Math.random() * 30;
+        } else {
+          weatherDescription = 'CIELO DESPEJADO';
+          cloudCover = 10 + Math.random() * 20;
         }
+      } else { // Evening
+        tempAdjustment = -1;
+        weatherDescription = 'NOCHE DESPEJADA';
+        cloudCover = 20 + Math.random() * 20;
+      }
+      
+      const finalTemp = baseTemp + tempAdjustment;
+      
+      // Create weather data object
+      state.weatherData = {
+        main: {
+          temp: finalTemp,
+          humidity: 30 + Math.random() * 40,
+          pressure: 1008 + Math.random() * 10
+        },
+        weather: [
+          { description: weatherDescription }
+        ],
+        wind: {
+          speed: 1 + Math.random() * 4 // m/s
+        },
+        clouds: {
+          all: cloudCover
+        }
+      };
+      
+      updateWeatherDisplay(state.weatherData);
     }
 
-    // ===== QUOTES SYSTEM =====
-    const quotes = [
-        // Citas originales
-        { quote: "El tiempo es una ilusión creada por la percepción humana.", author: "Albert Einstein" },
-        { quote: "La realidad es simplemente una ilusión, aunque muy persistente.", author: "Albert Einstein" },
-        { quote: "El arte digital es la fusión perfecta entre tecnología y creatividad.", author: "Anónimo" },
-        { quote: "El futuro pertenece a aquellos que creen en la belleza de sus sueños.", author: "Eleanor Roosevelt" },
-        { quote: "La simplicidad es la máxima sofisticación.", author: "Leonardo da Vinci" },
-        { quote: "La tecnología es mejor cuando reúne a la gente.", author: "Matt Mullenweg" },
-        { quote: "El diseño no es solo lo que parece y se siente. El diseño es cómo funciona.", author: "Steve Jobs" },
-        { quote: "La innovación distingue entre un líder y un seguidor.", author: "Steve Jobs" },
-        { quote: "La creatividad es la inteligencia divirtiéndose.", author: "Albert Einstein" },
-        { quote: "El arte desafía a la tecnología, y la tecnología inspira al arte.", author: "John Lasseter" },
-        { quote: "El tiempo es el recurso más valioso que tenemos, porque es limitado.", author: "Anónimo" },
-        { quote: "La belleza perece en la vida, pero es inmortal en el arte.", author: "Leonardo da Vinci" },
-        { quote: "La tecnología es solo una herramienta. La gente usa las herramientas para mejorar sus vidas.", author: "Tom Clancy" },
-        { quote: "El futuro ya está aquí, solo que no está distribuido uniformemente.", author: "William Gibson" },
-        { quote: "La ciencia de hoy es la tecnología del mañana.", author: "Edward Teller" },
-        
-        // Citas sobre química
-        { quote: "La química es la ciencia de la materia, pero también es el arte de la transformación.", author: "Peter Atkins" },
-        { quote: "En la vida, como en la química, nada se pierde, todo se transforma.", author: "Antoine Lavoisier" },
-        { quote: "Cada elemento cuenta una historia, cada molécula tiene un propósito.", author: "Linus Pauling" },
-        { quote: "La química es esa ciencia en la que cada descubrimiento es un pequeño milagro.", author: "Marie Curie" },
-        { quote: "Los átomos son las letras, las moléculas son las palabras, y las reacciones son los párrafos del libro de la vida.", author: "Dmitri Mendeleev" },
-        
-        // Citas sobre libros/lectura/poesía
-        { quote: "Un libro debe ser el hacha que rompa el mar helado dentro de nosotros.", author: "Franz Kafka" },
-        { quote: "La poesía es el eco de la melodía del universo resonando en el corazón humano.", author: "Rabindranath Tagore" },
-        { quote: "Leer es viajar sin moverse del sitio.", author: "Jhumpa Lahiri" },
-        { quote: "Un lector vive mil vidas antes de morir. Quien nunca lee vive solo una.", author: "George R.R. Martin" },
-        { quote: "Los libros son espejos: sólo ves en ellos lo que ya llevas dentro.", author: "Carlos Ruiz Zafón" },
-        
-        // Citas sobre hongos microscópicos
-        { quote: "Los hongos son los grandes recicladores del planeta, transformando la muerte en nueva vida.", author: "Paul Stamets" },
-        { quote: "El reino fungi es un universo paralelo bajo nuestros pies.", author: "Merlin Sheldrake" },
-        { quote: "Los hongos microscópicos son los arquitectos invisibles de nuestros ecosistemas.", author: "Suzanne Simard" },
-        { quote: "En la red micelial de los hongos encontramos el internet original de la naturaleza.", author: "Paul Stamets" },
-        { quote: "Los hongos nos enseñan que la vida prospera en la interconexión, no en el aislamiento.", author: "Giuliana Furci" },
-        
-        // Citas sobre flebotomía
-        { quote: "La sangre es el río de la vida, y la flebotomía es el arte de navegar sus corrientes.", author: "William Harvey" },
-        { quote: "En cada gota de sangre hay un océano de información.", author: "Anónimo" },
-        { quote: "La flebotomía es tanto ciencia como arte, requiere precisión y compasión.", author: "Anónimo" },
-        { quote: "La sangre cuenta historias que ninguna otra prueba puede revelar.", author: "Elizabeth Blackwell" },
-        { quote: "La flebotomía nos recuerda que incluso en la era digital, algunas verdades solo se encuentran en nuestros fluidos vitales.", author: "Anónimo" }
-    ];
+    function updateWeatherDisplay(data) {
+      const tempElement = document.getElementById('temperature');
+      const tempText = `${Math.round(data.main.temp)}°C`;
+      tempElement.textContent = tempText;
+      tempElement.setAttribute('data-text', tempText);
+      
+      document.getElementById('weather-condition').textContent = data.weather[0].description;
+      
+      // Update weather particles based on conditions
+      updateWeatherParticles(data);
+    }
 
+    function updateWeatherParticles(data) {
+      const container = document.getElementById('weather-particles');
+      container.innerHTML = '';
+      
+      const weatherDesc = data.weather[0].description.toLowerCase();
+      const now = new Date();
+      const hours = now.getHours();
+      const isNight = hours >= 20 || hours < 6;
+      
+      // Create particles based on weather condition
+      if (isNight) {
+        // Stars for night
+        for (let i = 0; i < 50; i++) {
+          const star = document.createElement('div');
+          star.className = 'star';
+          star.style.position = 'absolute';
+          star.style.width = `${0.2 + Math.random() * 0.3}vmin`;
+          star.style.height = `${0.2 + Math.random() * 0.3}vmin`;
+          star.style.backgroundColor = '#ffffff';
+          star.style.borderRadius = '50%';
+          star.style.left = `${Math.random() * 100}%`;
+          star.style.top = `${Math.random() * 100}%`;
+          star.style.opacity = `${0.3 + Math.random() * 0.7}`;
+          star.style.boxShadow = '0 0 5px rgba(255, 255, 255, 0.8)';
+          star.style.animation = `pulse ${2 + Math.random() * 3}s infinite ease-in-out ${Math.random() * 2}s`;
+          container.appendChild(star);
+        }
+      } else if (weatherDesc.includes('nublado') || weatherDesc.includes('parcial')) {
+        // Cloud particles
+        for (let i = 0; i < 10; i++) {
+          const cloud = document.createElement('div');
+          cloud.style.position = 'absolute';
+          cloud.style.width = `${20 + Math.random() * 30}vmin`;
+          cloud.style.height = `${10 + Math.random() * 15}vmin`;
+          cloud.style.borderRadius = '50%';
+          cloud.style.background = 'rgba(255, 255, 255, 0.1)';
+          cloud.style.filter = 'blur(5vmin)';
+          cloud.style.top = `${Math.random() * 80}%`;
+          cloud.style.left = `${Math.random() * 80}%`;
+          cloud.style.animation = `float ${10 + Math.random() * 10}s infinite ease-in-out ${Math.random() * 5}s`;
+          container.appendChild(cloud);
+        }
+      } else {
+        // Sun particles for clear sky
+        const sun = document.createElement('div');
+        sun.style.position = 'absolute';
+        sun.style.width = '30vmin';
+        sun.style.height = '30vmin';
+        sun.style.borderRadius = '50%';
+        sun.style.background = 'radial-gradient(circle, rgba(0, 229, 255, 0.2) 0%, rgba(0, 229, 255, 0) 70%)';
+        sun.style.top = '30%';
+        sun.style.left = '30%';
+        sun.style.boxShadow = '0 0 50px rgba(0, 229, 255, 0.3)';
+        sun.style.animation = 'pulse 5s infinite ease-in-out';
+        container.appendChild(sun);
+        
+        // Add some light rays
+        for (let i = 0; i < 8; i++) {
+          const ray = document.createElement('div');
+          ray.style.position = 'absolute';
+          ray.style.width = '50vmin';
+          ray.style.height = '1px';
+          ray.style.backgroundColor = 'rgba(0, 229, 255, 0.1)';
+          ray.style.top = 'calc(30% + 15vmin)';
+          ray.style.left = 'calc(30% + 15vmin)';
+          ray.style.transformOrigin = 'left center';
+          ray.style.transform = `rotate(${i * 45}deg)`;
+          container.appendChild(ray);
+        }
+      }
+    }
+
+    // ===== QUOTE MODULE =====
     function displayRandomQuote() {
-        try {
-            // Select random quote
-            const randomIndex = Math.floor(Math.random() * quotes.length);
-            const randomQuote = quotes[randomIndex];
-            
-            // Update DOM
-            document.getElementById('quote-text').textContent = `${randomQuote.quote}`;
-            document.getElementById('quote-author').textContent = `— ${randomQuote.author}`;
-            
-            debug("Quote displayed successfully");
-        } catch (error) {
-            debug("Error displaying quote: " + error.message);
+      // Select random quote
+      const randomIndex = Math.floor(Math.random() * CONFIG.quotes.length);
+      const randomQuote = CONFIG.quotes[randomIndex];
+      
+      // Update DOM
+      document.getElementById('quote-text').textContent = `${randomQuote.quote}`;
+      document.getElementById('quote-author').textContent = `— ${randomQuote.author}`;
+    }
+
+    // ===== PHOTO MODULE - COMPLETELY REDESIGNED =====
+    function initPhotoModule() {
+      const photoShowcase = document.getElementById('photo-showcase');
+      photoShowcase.innerHTML = '';
+      state.photoFrames = [];
+      state.currentPhotoIndex = 0;
+      
+      // Create frames for each photo
+      CONFIG.photos.forEach((photo, index) => {
+        const frame = document.createElement('div');
+        frame.className = 'photo-frame';
+        if (index === 0) {
+          frame.classList.add('active');
+        } else if (index === 1) {
+          frame.classList.add('next');
+        } else if (index === CONFIG.photos.length - 1) {
+          frame.classList.add('prev');
         }
-    }
-
-
-
-    // ===== PHOTO SYSTEM =====
-function initPolaroids() {
-  try {
-    debug("Initializing polaroids...")
-    const polaroidContainer = document.getElementById("polaroid-container")
-    polaroidContainer.innerHTML = ""
-    polaroids = []
-
-    // Create polaroids from local images
-    createPolaroids(polaroidImages)
-
-    // Set initial display
-    if (polaroids.length > 0) {
-      polaroidIndex = 0
-      polaroids[0].style.display = "block"
-      polaroids[0].classList.add("active")
-      polaroids[0].style.setProperty("--rotate", `${Math.random() * 20 - 10}deg`)
-      polaroids[0].style.setProperty("--z", `${Math.random() * 50}px`)
-
-      // Hide other polaroids
-      for (let i = 1; i < polaroids.length; i++) {
-        polaroids[i].style.display = "none"
-        polaroids[i].classList.remove("active")
-      }
-    }
-
-    debug(`Initialized ${polaroids.length} polaroids successfully`)
-  } catch (error) {
-    debug("Error initializing polaroids: " + error.message)
-  }
-}
-    
-function createPolaroids(images) {
-  try {
-    const polaroidContainer = document.getElementById("polaroid-container")
-
-    images.forEach((image, index) => {
-      const polaroid = document.createElement("div")
-      polaroid.className = "polaroid"
-
-      // Set random rotation and z-index for 3D effect
-      polaroid.style.setProperty("--rotate", `${Math.random() * 20 - 10}deg`)
-      polaroid.style.setProperty("--z", `${Math.random() * 50}px`)
-
-      const img = new Image()
-      img.crossOrigin = "anonymous" // Add this to avoid CORS issues
-      img.className = "polaroid-img"
-      img.alt = image.caption
-
-      // Add loading indicator
-      const loadingDiv = document.createElement("div")
-      loadingDiv.textContent = "Cargando..."
-      loadingDiv.style.position = "absolute"
-      loadingDiv.style.top = "50%"
-      loadingDiv.style.left = "50%"
-      loadingDiv.style.transform = "translate(-50%, -50%)"
-      loadingDiv.style.color = "#333"
-      polaroid.appendChild(loadingDiv)
-
-      // Handle successful image load
-      img.onload = () => {
-        polaroid.removeChild(loadingDiv)
-        debug(`Image loaded successfully: ${image.url}`)
-      }
-
-      // Handle image load errors
-      img.onerror = () => {
-        debug(`Error loading image: ${image.url}`)
-        polaroid.removeChild(loadingDiv)
-
-        // Create fallback content
-        const errorDiv = document.createElement("div")
-        errorDiv.textContent = "❌ Imagen no disponible"
-        errorDiv.style.width = "300px"
-        errorDiv.style.height = "200px"
-        errorDiv.style.display = "flex"
-        errorDiv.style.alignItems = "center"
-        errorDiv.style.justifyContent = "center"
-        errorDiv.style.backgroundColor = "#f8f8f8"
-        errorDiv.style.color = "#333"
-        errorDiv.style.fontSize = "1.2rem"
-        polaroid.insertBefore(errorDiv, polaroid.firstChild)
-      }
-
-      // Set image source after setting up event handlers
-      img.src = image.url
-
-      const caption = document.createElement("div")
-      caption.className = "polaroid-caption"
-      caption.textContent = image.caption
-
-      polaroid.appendChild(img)
-      polaroid.appendChild(caption)
-      polaroidContainer.appendChild(polaroid)
-      polaroids.push(polaroid)
-    })
-  } catch (error) {
-    debug("Error creating polaroids: " + error.message)
-  }
-}
-    
-function rotatePolaroids() {
-  try {
-    if (polaroids.length <= 1) return
-
-    // Hide current polaroid
-    polaroids[polaroidIndex].style.display = "none"
-    polaroids[polaroidIndex].classList.remove("active")
-
-    // Update index
-    polaroidIndex = (polaroidIndex + 1) % polaroids.length
-
-    // Show next polaroid with new random rotation and z-index
-    const newRotate = Math.random() * 20 - 10
-    const newZ = Math.random() * 50
-
-    polaroids[polaroidIndex].style.setProperty("--rotate", `${newRotate}deg`)
-    polaroids[polaroidIndex].style.setProperty("--z", `${newZ}px`)
-    polaroids[polaroidIndex].style.display = "block"
-    polaroids[polaroidIndex].classList.add("active")
-
-    debug(`Rotated to polaroid ${polaroidIndex}`)
-  } catch (error) {
-    debug("Error rotating polaroids: " + error.message)
-  }
-}
-
-
-// Para barajar el orden de reproducción
-let trackOrder = [];
-let orderIndex = 0;
-
-function shuffleArray(arr) {
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-}
-
-
-    // ===== MUSIC SYSTEM =====
-function initMusicPlayer() {
-    try {
-        debug("Inicializando reproductor de música...");
         
-        // Generar un orden aleatorio sin repeticiones
-        trackOrder = playlist.map((_, i) => i);
-        shuffleArray(trackOrder);
-        orderIndex = 0;
-        currentTrackIndex = trackOrder[orderIndex];
-
-        // Mostrar info inicial
-        updateMusicDisplay();
-
-        // Empezar reproducción
-        playCurrentTrack();
-    } catch (error) {
-        debug("Error initMusicPlayer: " + error.message);
+        const imageContainer = document.createElement('div');
+        imageContainer.className = 'photo-image-container';
+        
+        const img = document.createElement('img');
+        img.className = 'photo-image';
+        img.src = photo.url;
+        img.alt = photo.title;
+        
+        const info = document.createElement('div');
+        info.className = 'photo-info';
+        
+        const title = document.createElement('div');
+        title.className = 'photo-title';
+        title.textContent = photo.title;
+        
+        const description = document.createElement('div');
+        description.className = 'photo-description';
+        description.textContent = photo.description;
+        
+        info.appendChild(title);
+        info.appendChild(description);
+        
+        imageContainer.appendChild(img);
+        imageContainer.appendChild(info);
+        frame.appendChild(imageContainer);
+        
+        photoShowcase.appendChild(frame);
+        state.photoFrames.push(frame);
+      });
+      
+      // Update counter
+      updatePhotoCounter(0);
+      
+      // Start progress bar
+      startPhotoProgress();
     }
-}
 
-function updateMusicDisplay() {
-    const track = playlist[currentTrackIndex];
-    document.getElementById('song-title').textContent = track.title;
-    document.getElementById('artist-name').textContent = track.artist;
-    document.getElementById('album-name').textContent = track.album;
-    document.getElementById('album-cover-img').src = track.cover;
-}
-    
-function playCurrentTrack() {
-    try {
-        const track = playlist[currentTrackIndex];
-        debug("Reproduciendo: " + track.title);
+    function updatePhotoCounter(index) {
+      const counter = document.getElementById('photo-counter');
+      const current = (index + 1).toString().padStart(2, '0');
+      const total = CONFIG.photos.length.toString().padStart(2, '0');
+      counter.textContent = `${current} / ${total}`;
+    }
 
+    function startPhotoProgress() {
+      // Reset progress bar
+      const progressBar = document.getElementById('photo-progress-bar');
+      progressBar.style.width = '0%';
+      
+      // Animate progress bar
+      const duration = 10000; // 10 seconds per photo
+      const startTime = Date.now();
+      
+      function updateProgress() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration * 100, 100);
+        progressBar.style.width = `${progress}%`;
+        
+        if (progress < 100) {
+          requestAnimationFrame(updateProgress);
+        }
+      }
+      
+      updateProgress();
+    }
+
+    function rotatePhotos() {
+      if (state.photoFrames.length <= 1) return;
+      
+      // Get current, next and prev indices
+      const currentIndex = state.currentPhotoIndex;
+      const nextIndex = (currentIndex + 1) % state.photoFrames.length;
+      const prevIndex = (currentIndex - 1 + state.photoFrames.length) % state.photoFrames.length;
+      
+      // Update classes
+      state.photoFrames.forEach((frame, index) => {
+        frame.classList.remove('active', 'next', 'prev');
+        
+        if (index === nextIndex) {
+          frame.classList.add('active');
+        } else if (index === (nextIndex + 1) % state.photoFrames.length) {
+          frame.classList.add('next');
+        } else if (index === (nextIndex - 1 + state.photoFrames.length) % state.photoFrames.length) {
+          frame.classList.add('prev');
+        }
+      });
+      
+      // Update current index
+      state.currentPhotoIndex = nextIndex;
+      
+      // Update counter
+      updatePhotoCounter(nextIndex);
+      
+      // Restart progress bar
+      startPhotoProgress();
+    }
+
+    // ===== MUSIC MODULE =====
+    function initMusicPlayer() {
+      // Create visualizer bars
+      const visualizer = document.getElementById('music-visualizer');
+      visualizer.innerHTML = '';
+      state.visualizerBars = [];
+      
+      const barCount = 32;
+      for (let i = 0; i < barCount; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'visualizer-bar';
+        visualizer.appendChild(bar);
+        state.visualizerBars.push(bar);
+      }
+      
+      // Initialize with first track
+      state.currentTrackIndex = 0;
+      updateMusicDisplay();
+      playCurrentTrack();
+      
+      // Set up audio context for visualization
+      try {
+        state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        state.audioAnalyser = state.audioContext.createAnalyser();
+        state.audioAnalyser.fftSize = 64;
+        state.audioData = new Uint8Array(state.audioAnalyser.frequencyBinCount);
+        
         const audioElement = document.getElementById('background-music');
-        audioElement.src = track.file;
-        audioElement.volume = 0.5;
+        state.audioSource = state.audioContext.createMediaElementSource(audioElement);
+        state.audioSource.connect(state.audioAnalyser);
+        state.audioAnalyser.connect(state.audioContext.destination);
+      } catch (e) {
+        console.log('Web Audio API not supported or blocked by autoplay policy');
+      }
+    }
 
-        audioElement.play().catch(err => {
-            debug("Auto-play bloqueado: " + err.message);
-            showNotification('Haz clic para iniciar la música');
+    function updateMusicDisplay() {
+      const track = CONFIG.playlist[state.currentTrackIndex];
+      
+      const titleElement = document.getElementById('song-title');
+      titleElement.textContent = track.title;
+      titleElement.setAttribute('data-text', track.title);
+      
+      document.getElementById('artist-name').textContent = track.artist;
+      document.getElementById('album-name').textContent = track.album;
+      document.getElementById('album-cover-img').src = track.cover;
+    }
+
+    function playCurrentTrack() {
+      const track = CONFIG.playlist[state.currentTrackIndex];
+      const audioElement = document.getElementById('background-music');
+      
+      audioElement.src = track.file;
+      audioElement.volume = 0.5;
+      
+      audioElement.play().catch(err => {
+        console.log("Auto-play blocked: " + err.message);
+      });
+      
+      audioElement.onended = function() {
+        // Move to next track
+        state.currentTrackIndex = (state.currentTrackIndex + 1) % CONFIG.playlist.length;
+        updateMusicDisplay();
+        playCurrentTrack();
+      };
+    }
+
+    function updateMusicVisualizer() {
+      if (!state.audioAnalyser || !state.audioData || !state.visualizerBars.length) return;
+      
+      // Get frequency data
+      state.audioAnalyser.getByteFrequencyData(state.audioData);
+      
+      // Update visualizer bars
+      const barCount = state.visualizerBars.length;
+      for (let i = 0; i < barCount; i++) {
+        const index = Math.floor(i * state.audioData.length / barCount);
+        const value = state.audioData[index];
+        const height = (value / 255) * 8; // Max height 8vmin
+        
+        state.visualizerBars[i].style.height = `${height}vmin`;
+        
+        // Color based on frequency
+        const hue = 180 + (value / 255) * 20; // Cyan range
+        state.visualizerBars[i].style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+      }
+    }
+
+    // ===== DATA VISUALIZATION MODULE - COMPLETELY REDESIGNED =====
+    function initDataVisualization() {
+      const container = document.getElementById('nexus-digital');
+      container.innerHTML = '<div class="nexus-core"></div>';
+      
+      state.nexusLayers = [];
+      state.nexusNodes = [];
+      state.nexusBeams = [];
+      
+      // Create layers
+      const layerCount = 5;
+      for (let i = 0; i < layerCount; i++) {
+        const layer = document.createElement('div');
+        layer.className = 'nexus-layer';
+        
+        // Size decreases with each layer
+        const size = 100 - i * 15;
+        layer.style.width = `${size}%`;
+        layer.style.height = `${size}%`;
+        layer.style.top = `${(100 - size) / 2}%`;
+        layer.style.left = `${(100 - size) / 2}%`;
+        
+        // Add rotation animation
+        const direction = i % 2 === 0 ? 'normal' : 'reverse';
+        const duration = 30 + i * 20;
+        layer.style.animation = `spin ${duration}s linear infinite ${direction}`;
+        
+        container.appendChild(layer);
+        state.nexusLayers.push(layer);
+      }
+      
+      // Create nodes
+      const nodeData = [
+        { name: "QUANTUM", value: "98.7%", type: "CORE" },
+        { name: "NEURAL", value: "76.3%", type: "NETWORK" },
+        { name: "TEMPORAL", value: "45.2%", type: "FLUX" },
+        { name: "SPATIAL", value: "89.1%", type: "GRID" },
+        { name: "ENERGY", value: "67.8%", type: "FIELD" },
+        { name: "DATA", value: "94.5%", type: "STREAM" },
+        { name: "MEMORY", value: "82.3%", type: "BANK" },
+        { name: "FUSION", value: "55.9%", type: "CORE" }
+      ];
+      
+      for (let i = 0; i < nodeData.length; i++) {
+        // Create node
+        const node = document.createElement('div');
+        node.className = 'nexus-node';
+        
+        // Position on random layer
+        const layerIndex = Math.floor(Math.random() * layerCount);
+        const layer = state.nexusLayers[layerIndex];
+        
+        // Calculate position on the layer (circular)
+        const angle = (i / nodeData.length) * Math.PI * 2;
+        const radius = parseInt(layer.style.width) / 2;
+        const x = 50 + Math.cos(angle) * radius * 0.8;
+        const y = 50 + Math.sin(angle) * radius * 0.8;
+        
+        node.style.left = `${x}%`;
+        node.style.top = `${y}%`;
+        
+        // Size based on "importance"
+        const size = 1.5 + Math.random();
+        node.style.width = `${size}vmin`;
+        node.style.height = `${size}vmin`;
+        
+        // Add pulsing animation
+        node.style.animation = `pulse ${3 + Math.random() * 2}s infinite ease-in-out ${Math.random() * 2}s`;
+        
+        // Add info tooltip
+        const info = document.createElement('div');
+        info.className = 'nexus-info';
+        info.innerHTML = `${nodeData[i].name}: ${nodeData[i].value}<br>${nodeData[i].type}`;
+        info.style.top = `${size * 1.5}vmin`;
+        node.appendChild(info);
+        
+        // Add pulse effect
+        const pulse = document.createElement('div');
+        pulse.className = 'nexus-pulse';
+        pulse.style.animationDelay = `${Math.random() * 3}s`;
+        node.appendChild(pulse);
+        
+        container.appendChild(node);
+        state.nexusNodes.push({
+          element: node,
+          info: info,
+          x: x,
+          y: y,
+          layerIndex: layerIndex
         });
-
-        audioElement.onended = function() {
-            // Avanzar en la lista barajada; al final vuelve al inicio
-            orderIndex = (orderIndex + 1) % trackOrder.length;
-            currentTrackIndex = trackOrder[orderIndex];
-            updateMusicDisplay();
-            playCurrentTrack();
-        };
-    } catch (error) {
-        debug("Error playCurrentTrack: " + error.message);
-    }
-}
-    
-    function simulateUserInteraction() {
-        debug("Simulating user interaction to enable audio...");
+      }
+      
+      // Create beams connecting to core
+      for (let i = 0; i < state.nexusNodes.length; i++) {
+        const node = state.nexusNodes[i];
         
-        // Crear un evento temporal para simular interacción
-        const tempButton = document.createElement('button');
-        tempButton.style.position = 'fixed';
-        tempButton.style.top = '-100px';
-        tempButton.style.left = '-100px';
-        tempButton.textContent = 'Iniciar Audio';
-        document.body.appendChild(tempButton);
+        // Calculate beam length and angle
+        const dx = node.x - 50;
+        const dy = node.y - 50;
+        const length = Math.sqrt(dx * dx + dy * dy) * container.offsetWidth / 100;
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
         
-        // Simular clic
-        setTimeout(() => {
-            tempButton.click();
-            document.body.removeChild(tempButton);
-            
-            // Intentar reproducir de nuevo
-            const audioElement = document.getElementById('background-music');
-            audioElement.play().then(() => {
-                debug("Audio playback started after simulated interaction");
-            }).catch(error => {
-                debug("Still couldn't play audio: " + error.message);
-                
-                // Como último recurso, mostrar una notificación
-                showNotification('Haz clic en cualquier lugar para iniciar la música');
-            });
-        }, 1000);
+        // Create beam
+        const beam = document.createElement('div');
+        beam.className = 'nexus-beam';
+        beam.style.width = `${length}px`;
+        beam.style.transform = `rotate(${angle}deg)`;
+        
+        container.appendChild(beam);
+        state.nexusBeams.push({
+          element: beam,
+          node: node,
+          length: length,
+          angle: angle
+        });
+      }
     }
 
-    // ===== FLUID SIMULATION =====
-    function initFluidParticles() {
-        try {
-            fluidParticles = [];
-            const particleCount = Math.min(Math.floor(window.innerWidth * window.innerHeight / 15000), 150);
-            
-            for (let i = 0; i < particleCount; i++) {
-                fluidParticles.push({
-                    x: Math.random() * fluidCanvas.width,
-                    y: Math.random() * fluidCanvas.height,
-                    size: Math.random() * 3 + 2,
-                    speedX: (Math.random() - 0.5) * 1,
-                    speedY: (Math.random() - 0.5) * 1,
-                    hue: Math.random() * 60 + 180, // Blue to purple range
-                    opacity: Math.random() * 0.5 + 0.3,
-                    targetHue: Math.random() * 60 + 180 // Target hue for smooth transitions
-                });
-            }
-            
-            debug("Fluid particles initialized successfully");
-        } catch (error) {
-            debug("Error initializing fluid particles: " + error.message);
+    function animateDataVisualization() {
+      if (!state.nexusNodes || !state.nexusNodes.length) return;
+      
+      // Show random node info
+      state.nexusNodes.forEach(node => {
+        node.info.classList.remove('active');
+      });
+      
+      const randomNodes = [];
+      const nodeCount = Math.floor(Math.random() * 3) + 1;
+      
+      for (let i = 0; i < nodeCount; i++) {
+        const randomIndex = Math.floor(Math.random() * state.nexusNodes.length);
+        if (!randomNodes.includes(state.nexusNodes[randomIndex])) {
+          randomNodes.push(state.nexusNodes[randomIndex]);
         }
-    }
-
-    function updateFluidParticles() {
-        try {
-            fluidCtx.clearRect(0, 0, fluidCanvas.width, fluidCanvas.height);
-            
-            // Draw connections between particles
-            fluidCtx.lineWidth = 1;
-            
-            for (let i = 0; i < fluidParticles.length; i++) {
-                for (let j = i + 1; j < fluidParticles.length; j++) {
-                    const dx = fluidParticles[i].x - fluidParticles[j].x;
-                    const dy = fluidParticles[i].y - fluidParticles[j].y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
-                    const maxDistance = 150;
-                    
-                    if (distance < maxDistance) {
-                        const opacity = (1 - distance / maxDistance) * 0.5;
-                        const gradient = fluidCtx.createLinearGradient(
-                            fluidParticles[i].x, fluidParticles[i].y,
-                            fluidParticles[j].x, fluidParticles[j].y
-                        );
-                        
-                        gradient.addColorStop(0, `hsla(${fluidParticles[i].hue}, 100%, 50%, ${opacity})`);
-                        gradient.addColorStop(1, `hsla(${fluidParticles[j].hue}, 100%, 50%, ${opacity})`);
-                        
-                        fluidCtx.strokeStyle = gradient;
-                        fluidCtx.beginPath();
-                        fluidCtx.moveTo(fluidParticles[i].x, fluidParticles[i].y);
-                        fluidCtx.lineTo(fluidParticles[j].x, fluidParticles[j].y);
-                        fluidCtx.stroke();
-                    }
-                }
-            }
-            
-            // Update and draw particles
-            for (let i = 0; i < fluidParticles.length; i++) {
-                const p = fluidParticles[i];
-                
-                // Smooth color transition
-                if (p.hue !== p.targetHue) {
-                    const diff = p.targetHue - p.hue;
-                    p.hue += diff * 0.01; // Gradual transition
-                }
-                
-                // Update position
-                p.x += p.speedX;
-                p.y += p.speedY;
-                
-                // Bounce off edges
-                if (p.x < 0 || p.x > fluidCanvas.width) {
-                    p.speedX *= -1;
-                }
-                if (p.y < 0 || p.y > fluidCanvas.height) {
-                    p.speedY *= -1;
-                }
-                
-                // Add some random movement
-                if (Math.random() > 0.99) {
-                    p.speedX += (Math.random() - 0.5) * 0.3;
-                    p.speedY += (Math.random() - 0.5) * 0.3;
-                }
-                
-                // Speed limit
-                const maxSpeed = 1.5;
-                const speed = Math.sqrt(p.speedX * p.speedX + p.speedY * p.speedY);
-                if (speed > maxSpeed) {
-                    p.speedX = (p.speedX / speed) * maxSpeed;
-                    p.speedY = (p.speedY / speed) * maxSpeed;
-                }
-                
-                // Draw particle
-                fluidCtx.fillStyle = `hsla(${p.hue}, 100%, 50%, ${p.opacity})`;
-                fluidCtx.beginPath();
-                fluidCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                fluidCtx.fill();
-            }
-        } catch (error) {
-            debug("Error updating fluid particles: " + error.message);
+      }
+      
+      randomNodes.forEach(node => {
+        node.info.classList.add('active');
+      });
+      
+      // Animate beams
+      state.nexusBeams.forEach(beam => {
+        const isActive = randomNodes.includes(beam.node);
+        
+        if (isActive) {
+          beam.element.style.backgroundColor = 'rgba(255, 0, 170, 0.8)';
+          beam.element.style.boxShadow = '0 0 10px rgba(255, 0, 170, 0.5)';
+          beam.element.style.height = '2px';
+        } else {
+          beam.element.style.backgroundColor = 'rgba(0, 229, 255, 0.3)';
+          beam.element.style.boxShadow = 'none';
+          beam.element.style.height = '1px';
         }
-    }
-
-    // ===== BACKGROUND EFFECT =====
-    function initBackgroundEffect() {
-        try {
-            backgroundParticles = [];
-            const gradientCount = 10;
-            
-            for (let i = 0; i < gradientCount; i++) {
-                backgroundParticles.push({
-                    x: Math.random() * backgroundCanvas.width,
-                    y: Math.random() * backgroundCanvas.height,
-                    size: Math.random() * 300 + 100,
-                    speedX: (Math.random() - 0.5) * 0.2,
-                    speedY: (Math.random() - 0.5) * 0.2,
-                    hue: Math.random() * 60 + 180,
-                    targetHue: Math.random() * 60 + 180,
-                    opacity: Math.random() * 0.3 + 0.2 // Increased opacity for better TV visibility
-                });
-            }
-            
-            debug("Background effect initialized successfully");
-        } catch (error) {
-            debug("Error initializing background effect: " + error.message);
-        }
-    }
-
-    function updateBackgroundEffect() {
-        try {
-            backgroundCtx.clearRect(0, 0, backgroundCanvas.width, backgroundCanvas.height);
-            
-            // Draw gradient blobs
-            for (let i = 0; i < backgroundParticles.length; i++) {
-                const p = backgroundParticles[i];
-                
-                // Smooth color transition
-                if (p.hue !== p.targetHue) {
-                    const diff = p.targetHue - p.hue;
-                    p.hue += diff * 0.01; // Gradual transition
-                }
-                
-                // Update position
-                p.x += p.speedX;
-                p.y += p.speedY;
-                
-                // Wrap around edges
-                if (p.x < -p.size) p.x = backgroundCanvas.width + p.size;
-                if (p.x > backgroundCanvas.width + p.size) p.x = -p.size;
-                if (p.y < -p.size) p.y = backgroundCanvas.height + p.size;
-                if (p.y > backgroundCanvas.height + p.size) p.y = -p.size;
-                
-                // Draw gradient blob
-                const gradient = backgroundCtx.createRadialGradient(
-                    p.x, p.y, 0,
-                    p.x, p.y, p.size
-                );
-                
-                gradient.addColorStop(0, `hsla(${p.hue}, 100%, 50%, ${p.opacity})`);
-                gradient.addColorStop(1, `hsla(${p.hue}, 100%, 50%, 0)`);
-                
-                backgroundCtx.fillStyle = gradient;
-                backgroundCtx.beginPath();
-                backgroundCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-                backgroundCtx.fill();
-            }
-        } catch (error) {
-            debug("Error updating background effect: " + error.message);
-        }
+      });
     }
 
     // ===== MODULE MANAGEMENT =====
     function showModule(index) {
-        try {
-            // Hide all modules
-            document.querySelectorAll('.module').forEach(module => {
-                module.classList.remove('active');
-            });
-            
-            // Show selected module
-            document.getElementById(modules[index]).classList.add('active');
-            currentModule = index;
-            
-            // If showing the photo module, rotate to a random photo
-            if (modules[index] === 'photo-module' && polaroids.length > 0) {
-                polaroidIndex = Math.floor(Math.random() * polaroids.length);
-                polaroids.forEach((p, i) => {
-                    p.style.display = i === polaroidIndex ? 'block' : 'none';
-                    if (i === polaroidIndex) {
-                        p.classList.add('active');
-                        p.style.setProperty('--rotate', `${Math.random() * 20 - 10}deg`);
-                    } else {
-                        p.classList.remove('active');
-                    }
-                });
-            }
-            
-            debug(`Module ${modules[index]} shown successfully`);
-        } catch (error) {
-            debug("Error showing module: " + error.message);
-        }
+      // Hide all modules
+      document.querySelectorAll('.module').forEach(module => {
+        module.classList.remove('active');
+      });
+      
+      // Show selected module
+      document.getElementById(CONFIG.modules[index]).classList.add('active');
+      state.currentModule = index;
+      
+      // Special handling for certain modules
+      if (CONFIG.modules[index] === 'photo-module') {
+        rotatePhotos();
+      } else if (CONFIG.modules[index] === 'data-module') {
+        animateDataVisualization();
+      }
     }
 
     function rotateModules() {
-        try {
-            const nextModule = (currentModule + 1) % modules.length;
-            showModule(nextModule);
-            debug(`Rotated to module ${modules[nextModule]}`);
-        } catch (error) {
-            debug("Error rotating modules: " + error.message);
-        }
-    }
-
-    // ===== THEME MANAGEMENT =====
-    function changeTheme(index) {
-        try {
-            if (themeTransitionInProgress) return;
-            themeTransitionInProgress = true;
-            
-            currentTheme = index;
-            const theme = themes[index];
-            
-            // Update fluid particles colors - gradual transition
-            fluidParticles.forEach(p => {
-                switch(index) {
-                    case 0: // Blue to purple
-                        p.targetHue = Math.random() * 60 + 180;
-                        break;
-                    case 1: // Red to orange
-                        p.targetHue = Math.random() * 40 + 0;
-                        break;
-                    case 2: // Green to teal
-                        p.targetHue = Math.random() * 60 + 100;
-                        break;
-                    case 3: // Pink to yellow
-                        p.targetHue = Math.random() * 60 + 300;
-                        break;
-                }
-            });
-            
-            // Update background particles colors - gradual transition
-            backgroundParticles.forEach(p => {
-                switch(index) {
-                    case 0: // Blue to purple
-                        p.targetHue = Math.random() * 60 + 180;
-                        break;
-                    case 1: // Red to orange
-                        p.targetHue = Math.random() * 40 + 0;
-                        break;
-                    case 2: // Green to teal
-                        p.targetHue = Math.random() * 60 + 100;
-                        break;
-                    case 3: // Pink to yellow
-                        p.targetHue = Math.random() * 60 + 300;
-                        break;
-                }
-            });
-            
-            // Update interface colors with smooth transitions
-            document.querySelectorAll('.temp-display, .song-title, .welcome-title').forEach(el => {
-                el.style.transition = 'text-shadow 3s ease';
-                el.style.background = `linear-gradient(to right, ${theme.secondary}, ${theme.primary})`;
-                el.style.webkitBackgroundClip = 'text';
-                el.style.webkitTextFillColor = 'transparent';
-            });
-            
-            document.querySelectorAll('.time-display').forEach(el => {
-                el.style.transition = 'text-shadow 3s ease';
-                el.style.textShadow = `0 0 20px ${theme.primary}cc`;
-            });
-            
-            document.querySelectorAll('.time-circle-core').forEach(el => {
-                el.style.transition = 'background 3s ease';
-                el.style.background = `radial-gradient(circle, ${theme.primary}22 0%, ${theme.primary}00 70%)`;
-            });
-            
-            document.querySelectorAll('#seconds-progress, #minutes-progress, #hours-progress').forEach(el => {
-                el.style.transition = 'stroke 3s ease';
-                el.setAttribute('stroke', `${theme.primary}88`);
-            });
-            
-            document.querySelectorAll('.hex-bg').forEach(el => {
-                el.style.transition = 'background 3s ease';
-                el.style.background = `linear-gradient(135deg, ${theme.secondary}22, ${theme.primary}22)`;
-            });
-            
-            // Reset transition flag after transition completes
-            setTimeout(() => {
-                themeTransitionInProgress = false;
-            }, 3000);
-            
-            debug(`Theme changed to ${theme.name}`);
-        } catch (error) {
-            debug("Error changing theme: " + error.message);
-            themeTransitionInProgress = false;
-        }
-    }
-
-    function rotateThemes() {
-        try {
-            const nextTheme = (currentTheme + 1) % themes.length;
-            changeTheme(nextTheme);
-            debug(`Rotated to theme ${themes[nextTheme].name}`);
-        } catch (error) {
-            debug("Error rotating themes: " + error.message);
-        }
-    }
-
-    // ===== NOTIFICATIONS =====
-    function showNotification(message) {
-        try {
-            // Skip theme change notifications
-            if (message.startsWith('Tema:')) return;
-            
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-            
-            debug(`Notification shown: ${message}`);
-        } catch (error) {
-            debug("Error showing notification: " + error.message);
-        }
+      const nextModule = (state.currentModule + 1) % CONFIG.modules.length;
+      showModule(nextModule);
     }
 
     // ===== ANIMATION LOOP =====
     function animate() {
-        try {
-            updateFluidParticles();
-            updateBackgroundEffect();
-            requestAnimationFrame(animate);
-        } catch (error) {
-            debug("Error in animation loop: " + error.message);
-            // Try to restart animation loop after a delay
-            setTimeout(() => {
-                requestAnimationFrame(animate);
-            }, 1000);
-        }
+      updateBackground();
+      updateParticles();
+      updateMusicVisualizer();
+      requestAnimationFrame(animate);
     }
 
     // ===== INITIALIZATION =====
     async function init() {
-        try {
-            debug("Initializing application...");
-            
-            // Initialize components
-            initFluidParticles();
-            initBackgroundEffect();
-            initPolaroids();
-            initMusicPlayer();
-            
-            // Start animation loop
-            animate();
-            
-            // Set up timers
-            setInterval(updateTime, 1000);
-            updateTime();
-            
-            // Display initial quote
-            displayRandomQuote();
-            
-            // Rotate quotes every 2 minutes
-            setInterval(displayRandomQuote, 120000);
-            
-            // Fetch weather data
-            await fetchWeatherData();
-            
-            // Update weather every 10 minutes
-            setInterval(fetchWeatherData, 600000);
-            
-            // Show first module (welcome)
-            showModule(5);
-            
-            // Rotate modules every 20 seconds
-            setInterval(rotateModules, moduleDuration);
-            
-            // Set initial theme
-            changeTheme(0);
-            
-            // Rotate themes every minute
-            setInterval(rotateThemes, themeDuration);
-            
-            // Rotate polaroids every 5 seconds when photo module is active
-            setInterval(() => {
-                if (modules[currentModule] === 'photo-module') {
-                    rotatePolaroids();
-                }
-            }, 5000);
-            
-            // Forzar reproducción de audio después de 3 segundos
-            setTimeout(() => {
-                const audioElement = document.getElementById('background-music');
-                if (audioElement.paused) {
-                    debug("Forcing audio playback after timeout");
-                    audioElement.play().catch(error => {
-                        debug("Still couldn't play audio: " + error.message);
-                    });
-                }
-            }, 3000);
-            
-            // Agregar evento de clic para iniciar audio
-            document.addEventListener('click', () => {
-                const audioElement = document.getElementById('background-music');
-                if (audioElement.paused) {
-                    audioElement.play().then(() => {
-                        debug("Audio started after user click");
-                    }).catch(error => {
-                        debug("Error starting audio after click: " + error.message);
-                    });
-                }
-                
-                // Intentar entrar en pantalla completa
-                try {
-                    if (!document.fullscreenElement) {
-                        document.documentElement.requestFullscreen().catch(err => {
-                            debug(`Error attempting to enable fullscreen: ${err.message}`);
-                        });
-                    }
-                } catch (error) {
-                    debug("Error toggling fullscreen: " + error.message);
-                }
-            });
-            
-            // Hide loading screen
-            setTimeout(() => {
-                document.getElementById('loading').classList.add('hidden');
-                debug("Loading screen hidden");
-            }, 2000);
-            
-            // Show welcome notification
-            setTimeout(() => {
-                showNotification('Bienvenido a Nexus Temporal');
-            }, 2000);
-            
-            debug("Application initialized successfully");
-        } catch (error) {
-            debug("Error during initialization: " + error.message);
-            // Hide loading screen even if there was an error
-            setTimeout(() => {
-                document.getElementById('loading').classList.add('hidden');
-            }, 2000);
+      // Initialize components
+      initTimeModule();
+      initPhotoModule();
+      initMusicPlayer();
+      initDataVisualization();
+      
+      // Start animation loop
+      animate();
+      
+      // Set up timers
+      setInterval(updateTime, 1000);
+      updateTime();
+      
+      // Display initial quote
+      displayRandomQuote();
+      
+      // Rotate quotes every 2 minutes
+      setInterval(displayRandomQuote, 120000);
+      
+      // Fetch weather data
+      await fetchWeatherData();
+      
+      // Update weather every 10 minutes
+      setInterval(fetchWeatherData, 600000);
+      
+      // Show first module
+      showModule(0);
+      
+      // Rotate modules
+      setInterval(rotateModules, CONFIG.moduleDuration);
+      
+      // Rotate photos every 10 seconds
+      setInterval(rotatePhotos, 10000);
+      
+      // Animate data visualization every 3 seconds when active
+      setInterval(() => {
+        if (CONFIG.modules[state.currentModule] === 'data-module') {
+          animateDataVisualization();
         }
+      }, 3000);
+      
+      // Add click event to start audio
+      document.addEventListener('click', () => {
+        const audioElement = document.getElementById('background-music');
+        if (audioElement.paused) {
+          audioElement.play().catch(error => {
+            console.log("Error starting audio after click: " + error.message);
+          });
+        }
+        
+        // Try to enter fullscreen
+        try {
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+              console.log(`Error attempting to enable fullscreen: ${err.message}`);
+            });
+          }
+        } catch (error) {
+          console.log("Error toggling fullscreen: " + error.message);
+        }
+      });
+      
+      // Hide loading screen
+      setTimeout(() => {
+        document.getElementById('loading').classList.add('hidden');
+      }, 2000);
     }
 
     // Start everything
     window.addEventListener('load', init);
-</script>
+  </script>
 </body>
 </html>
