@@ -1939,23 +1939,27 @@
     }
 
     // ===== MODULE MANAGEMENT =====
-    function showModule(index) {
-      // Hide all modules
-      document.querySelectorAll('.module').forEach(module => {
-        module.classList.remove('active');
-      });
-      
-      // Show selected module
-      document.getElementById(CONFIG.modules[index]).classList.add('active');
-      state.currentModule = index;
-      
-      // Special handling for certain modules
-      if (CONFIG.modules[index] === 'photo-module') {
-        rotatePhotos();
-      } else if (CONFIG.modules[index] === 'data-module') {
-        animateDataVisualization();
-      }
-    }
+function showModule(index) {
+  // Hide all modules
+  document.querySelectorAll('.module').forEach(module => {
+    module.classList.remove('active');
+  });
+
+  // Show selected module
+  const moduleId = CONFIG.modules[index];
+  document.getElementById(moduleId).classList.add('active');
+  state.currentModule = index;
+
+  // Special handling for certain modules
+  if (moduleId === 'photo-module') {
+    rotatePhotos();
+  } else if (moduleId === 'data-module') {
+    animateDataVisualization();
+  } else if (moduleId === 'weather-module') {
+    fetchWeatherData(); // 🔄 Actualizar clima en cada aparición
+  }
+}
+
 
     function rotateModules() {
       const nextModule = (state.currentModule + 1) % CONFIG.modules.length;
