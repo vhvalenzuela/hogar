@@ -1104,15 +1104,14 @@
     </div>
 
     <!-- Data Visualization Module - Completely Redesigned -->
-    <div class="module data-module" id="data-module">
-      <div class="data-container">
-        <div class="nexus-title">NEXUS DIGITAL</div>
-        <div class="nexus-digital" id="nexus-digital">
-          <div class="nexus-core"></div>
-          <!-- Layers, beams and nodes will be added dynamically -->
-        </div>
-      </div>
+<!-- Quantum Canvas Module -->
+<div class="module data-module" id="data-module">
+  <div class="data-container">
+    <div class="quantum-canvas" id="nexus-digital">
+      <!-- Quantum elements will be added dynamically -->
     </div>
+  </div>
+</div>
   </div>
 
   <!-- Visual effects layers -->
@@ -2107,7 +2106,10 @@ function showModule(index) {
   } else if (moduleId === 'data-module') {
     animateDataVisualization();
   } else if (moduleId === 'weather-module') {
-    fetchWeatherData(); // 🔄 Actualizar clima en cada aparición
+    fetchWeatherData();
+  } else if (moduleId === 'music-module') {
+    // Ensure music info is current when module shows
+    updateMusicDisplay();
   }
 }
 
