@@ -904,6 +904,12 @@
       pointer-events: none;
       background: radial-gradient(circle, transparent 60%, rgba(0, 0, 0, 0.5) 100%);
     }
+
+    @keyframes particle-rotate {
+  0% { transform: rotateZ(0deg) translateZ(0); }
+  100% { transform: rotateZ(360deg) translateZ(0); }
+}
+
   </style>
 </head>
 <body>
@@ -1252,6 +1258,8 @@
       nexusBeams: []
     };
 
+    let musicQueue = []; // ⏯️ Cola de reproducción sin repeticiones
+
     // ===== CANVAS SETUP =====
     const backgroundCanvas = document.getElementById('background-canvas');
     const backgroundCtx = backgroundCanvas.getContext('2d');
@@ -1464,10 +1472,58 @@
     }
 
     // ===== WEATHER MODULE =====
-    async function fetchWeatherData() {
-      // Use placeholder weather data
-      usePlaceholderWeatherData();
-    }
+async function fetchWeatherData() {
+  try {
+    const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=27.49&longitude=-109.93&current=temperature_2m,weather_code&timezone=auto");
+    const data = await response.json();
+
+    const weatherCode = data.current.weather_code;
+    const description = getWeatherDescription(weatherCode);
+
+    state.weatherData = {
+      main: {
+        temp: data.current.temperature_2m
+      },
+      weather: [
+        { description }
+      ]
+    };
+
+    updateWeatherDisplay(state.weatherData);
+  } catch (error) {
+    console.error("Error al obtener el clima:", error);
+    usePlaceholderWeatherData(); // fallback si hay error
+  }
+}
+
+function getWeatherDescription(code) {
+  const descriptions = {
+    0: "CIELO DESPEJADO",
+    1: "MAYORMENTE DESPEJADO",
+    2: "PARCIALMENTE NUBLADO",
+    3: "NUBLADO",
+    45: "NIEBLA",
+    48: "NIEBLA CON ESCARCHA",
+    51: "LLUVIA LIGERA",
+    53: "LLUVIA MODERADA",
+    55: "LLUVIA INTENSA",
+    61: "CHUBASCOS LIGEROS",
+    63: "CHUBASCOS MODERADOS",
+    65: "CHUBASCOS FUERTES",
+    71: "NEVADA LIGERA",
+    73: "NEVADA MODERADA",
+    75: "NEVADA FUERTE",
+    80: "LLUVIA INTERMITENTE",
+    81: "CHUBASCOS MODERADOS",
+    82: "CHUBASCOS FUERTES",
+    95: "TORMENTA ELÉCTRICA",
+    96: "TORMENTA C/ GRANIZO",
+    99: "TORMENTA FUERTE C/ GRANIZO"
+  };
+  return descriptions[code] || "CONDICIÓN DESCONOCIDA";
+}
+
+    
 
     function usePlaceholderWeatherData() {
       // Create placeholder data based on time of day and season
@@ -1750,40 +1806,57 @@
     }
 
     // ===== MUSIC MODULE =====
-    function initMusicPlayer() {
-      // Create visualizer bars
-      const visualizer = document.getElementById('music-visualizer');
-      visualizer.innerHTML = '';
-      state.visualizerBars = [];
-      
-      const barCount = 32;
-      for (let i = 0; i < barCount; i++) {
-        const bar = document.createElement('div');
-        bar.className = 'visualizer-bar';
-        visualizer.appendChild(bar);
-        state.visualizerBars.push(bar);
-      }
-      
-      // Initialize with first track
-      state.currentTrackIndex = Math.floor(Math.random() * CONFIG.playlist.length);
-      updateMusicDisplay();
-      playCurrentTrack();
-      
-      // Set up audio context for visualization
-      try {
-        state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        state.audioAnalyser = state.audioContext.createAnalyser();
-        state.audioAnalyser.fftSize = 64;
-        state.audioData = new Uint8Array(state.audioAnalyser.frequencyBinCount);
-        
-        const audioElement = document.getElementById('background-music');
-        state.audioSource = state.audioContext.createMediaElementSource(audioElement);
-        state.audioSource.connect(state.audioAnalyser);
-        state.audioAnalyser.connect(state.audioContext.destination);
-      } catch (e) {
-        console.log('Web Audio API not supported or blocked by autoplay policy');
-      }
-    }
+function initMusicPlayer() {
+  const visualizer = document.getElementById('music-visualizer');
+  visualizer.innerHTML = '';
+  state.visualizerBars = [];
+
+  const barCount = 32;
+  for (let i = 0; i < barCount; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'visualizer-bar';
+    visualizer.appendChild(bar);
+    state.visualizerBars.push(bar);
+  }
+
+  // Inicializa la cola aleatoria
+  resetMusicQueue();
+  playNextTrack();
+
+  try {
+    state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    state.audioAnalyser = state.audioContext.createAnalyser();
+    state.audioAnalyser.fftSize = 64;
+    state.audioData = new Uint8Array(state.audioAnalyser.frequencyBinCount);
+
+    const audioElement = document.getElementById('background-music');
+    state.audioSource = state.audioContext.createMediaElementSource(audioElement);
+    state.audioSource.connect(state.audioAnalyser);
+    state.audioAnalyser.connect(state.audioContext.destination);
+  } catch (e) {
+    console.log('Web Audio API not supported or blocked by autoplay policy');
+  }
+}
+
+function resetMusicQueue() {
+  const indices = CONFIG.playlist.map((_, i) => i);
+  musicQueue = indices.sort(() => Math.random() - 0.5); // Aleatorio
+}
+
+function playNextTrack() {
+  if (musicQueue.length === 0) resetMusicQueue();
+  state.currentTrackIndex = musicQueue.shift();
+
+  const track = CONFIG.playlist[state.currentTrackIndex];
+  const audioElement = document.getElementById('background-music');
+  audioElement.src = track.file;
+  audioElement.volume = 0.5;
+  updateMusicDisplay();
+
+  audioElement.play().catch(err => console.log("Error de reproducción: " + err.message));
+  audioElement.onended = playNextTrack;
+}
+
 
     function updateMusicDisplay() {
       const track = CONFIG.playlist[state.currentTrackIndex];
@@ -1828,9 +1901,11 @@
       for (let i = 0; i < barCount; i++) {
         const index = Math.floor(i * state.audioData.length / barCount);
         const value = state.audioData[index];
-        const height = (value / 255) * 8; // Max height 8vmin
+        const height = Math.max(0.5, (value / 255) * 10); // Aumenta altura base
         
         state.visualizerBars[i].style.height = `${height}vmin`;
+        state.visualizerBars[i].style.transform = `scaleY(${1 + value / 255})`;
+        state.visualizerBars[i].style.opacity = `${0.5 + (value / 255) * 0.5}`;
         
         // Color based on frequency
         const hue = 180 + (value / 255) * 20; // Cyan range
@@ -1839,122 +1914,34 @@
     }
 
     // ===== DATA VISUALIZATION MODULE - COMPLETELY REDESIGNED =====
-    function initDataVisualization() {
-      const container = document.getElementById('nexus-digital');
-      container.innerHTML = '<div class="nexus-core"></div>';
-      
-      state.nexusLayers = [];
-      state.nexusNodes = [];
-      state.nexusBeams = [];
-      
-      // Create layers
-      const layerCount = 5;
-      for (let i = 0; i < layerCount; i++) {
-        const layer = document.createElement('div');
-        layer.className = 'nexus-layer';
-        
-        // Size decreases with each layer
-        const size = 100 - i * 15;
-        layer.style.width = `${size}%`;
-        layer.style.height = `${size}%`;
-        layer.style.top = `${(100 - size) / 2}%`;
-        layer.style.left = `${(100 - size) / 2}%`;
-        
-        // Add rotation animation
-        const direction = i % 2 === 0 ? 'normal' : 'reverse';
-        const duration = 30 + i * 20;
-        layer.style.animation = `spin ${duration}s linear infinite ${direction}`;
-        
-        container.appendChild(layer);
-        state.nexusLayers.push(layer);
-      }
-      
-      // Create nodes
-      const nodeData = [
-        { name: "QUANTUM", value: "98.7%", type: "CORE" },
-        { name: "NEURAL", value: "76.3%", type: "NETWORK" },
-        { name: "TEMPORAL", value: "45.2%", type: "FLUX" },
-        { name: "SPATIAL", value: "89.1%", type: "GRID" },
-        { name: "ENERGY", value: "67.8%", type: "FIELD" },
-        { name: "DATA", value: "94.5%", type: "STREAM" },
-        { name: "MEMORY", value: "82.3%", type: "BANK" },
-        { name: "FUSION", value: "55.9%", type: "CORE" }
-      ];
-      
-      for (let i = 0; i < nodeData.length; i++) {
-        // Create node
-        const node = document.createElement('div');
-        node.className = 'nexus-node';
-        
-        // Position on random layer
-        const layerIndex = Math.floor(Math.random() * layerCount);
-        const layer = state.nexusLayers[layerIndex];
-        
-        // Calculate position on the layer (circular)
-        const angle = (i / nodeData.length) * Math.PI * 2;
-        const radius = parseInt(layer.style.width) / 2;
-        const x = 50 + Math.cos(angle) * radius * 0.8;
-        const y = 50 + Math.sin(angle) * radius * 0.8;
-        
-        node.style.left = `${x}%`;
-        node.style.top = `${y}%`;
-        
-        // Size based on "importance"
-        const size = 1.5 + Math.random();
-        node.style.width = `${size}vmin`;
-        node.style.height = `${size}vmin`;
-        
-        // Add pulsing animation
-        node.style.animation = `pulse ${3 + Math.random() * 2}s infinite ease-in-out ${Math.random() * 2}s`;
-        
-        // Add info tooltip
-        const info = document.createElement('div');
-        info.className = 'nexus-info';
-        info.innerHTML = `${nodeData[i].name}: ${nodeData[i].value}<br>${nodeData[i].type}`;
-        info.style.top = `${size * 1.5}vmin`;
-        node.appendChild(info);
-        
-        // Add pulse effect
-        const pulse = document.createElement('div');
-        pulse.className = 'nexus-pulse';
-        pulse.style.animationDelay = `${Math.random() * 3}s`;
-        node.appendChild(pulse);
-        
-        container.appendChild(node);
-        state.nexusNodes.push({
-          element: node,
-          info: info,
-          x: x,
-          y: y,
-          layerIndex: layerIndex
-        });
-      }
-      
-      // Create beams connecting to core
-      for (let i = 0; i < state.nexusNodes.length; i++) {
-        const node = state.nexusNodes[i];
-        
-        // Calculate beam length and angle
-        const dx = node.x - 50;
-        const dy = node.y - 50;
-        const length = Math.sqrt(dx * dx + dy * dy) * container.offsetWidth / 100;
-        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-        
-        // Create beam
-        const beam = document.createElement('div');
-        beam.className = 'nexus-beam';
-        beam.style.width = `${length}px`;
-        beam.style.transform = `rotate(${angle}deg)`;
-        
-        container.appendChild(beam);
-        state.nexusBeams.push({
-          element: beam,
-          node: node,
-          length: length,
-          angle: angle
-        });
-      }
-    }
+function initDataVisualization() {
+  const container = document.getElementById('nexus-digital');
+  container.innerHTML = ''; // Limpia contenido previo
+
+  const particleCount = 300;
+  const fragment = document.createDocumentFragment();
+
+  for (let i = 0; i < particleCount; i++) {
+    const p = document.createElement('div');
+    p.className = 'nexus-node';
+
+    const angle = i * 0.1;
+    const radius = 20 + i * 0.05;
+    const x = 50 + Math.cos(angle) * radius;
+    const y = 50 + Math.sin(angle) * radius * Math.sin(i * 0.05);
+
+    p.style.left = `${x}%`;
+    p.style.top = `${y}%`;
+    p.style.width = `${0.5 + Math.random()}vmin`;
+    p.style.height = `${0.5 + Math.random()}vmin`;
+    p.style.animation = `pulse ${2 + Math.random() * 3}s infinite ease-in-out ${Math.random()}s`;
+
+    fragment.appendChild(p);
+  }
+
+  container.appendChild(fragment);
+}
+
 
     function animateDataVisualization() {
       if (!state.nexusNodes || !state.nexusNodes.length) return;
@@ -2013,7 +2000,9 @@ function showModule(index) {
     animateDataVisualization();
   } else if (moduleId === 'weather-module') {
     fetchWeatherData(); // 🔄 Actualizar clima en cada aparición
-  }
+  } else if (moduleId === 'music-module') {
+  updateMusicDisplay(); // 🔄 Refresca visualización siempre
+}
 }
 
 
