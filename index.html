@@ -520,143 +520,25 @@
     }
 
     /* Data Visualization Module - Completely Redesigned */
-/* Quantum Canvas Module - Artistic Digital Installation */
-.data-module {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  perspective: 2000px;
-}
+    .data-module {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      perspective: 1500px;
+    }
 
-.data-container {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.quantum-canvas {
-  position: relative;
-  width: 90vmin;
-  height: 90vmin;
-  transform-style: preserve-3d;
-}
-
-.quantum-field {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(0, 229, 255, 0.1) 0%, transparent 70%);
-  animation: quantum-pulse 8s infinite ease-in-out;
-}
-
-.quantum-particle {
-  position: absolute;
-  width: 3px;
-  height: 3px;
-  background: var(--color-accent);
-  border-radius: 50%;
-  box-shadow: 0 0 10px var(--color-accent);
-}
-
-.quantum-wave {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 2px;
-  height: 60vmin;
-  background: linear-gradient(to bottom, 
-    transparent 0%, 
-    rgba(0, 229, 255, 0.8) 20%, 
-    rgba(255, 0, 170, 0.8) 50%, 
-    rgba(0, 229, 255, 0.8) 80%, 
-    transparent 100%);
-  transform-origin: center bottom;
-  transform: translate(-50%, -50%);
-  filter: blur(1px);
-}
-
-.quantum-spiral {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 1px;
-  height: 40vmin;
-  background: linear-gradient(to top, transparent, var(--color-accent-alt));
-  transform-origin: center bottom;
-  transform: translate(-50%, 0);
-}
-
-.quantum-title {
-  position: absolute;
-  top: 15%;
-  left: 0;
-  width: 100%;
-  text-align: center;
-  font-family: var(--font-display);
-  font-size: 2.5vmin;
-  color: var(--color-accent);
-  letter-spacing: 0.5em;
-  text-transform: uppercase;
-  opacity: 0.8;
-}
-
-@keyframes quantum-pulse {
-  0%, 100% {
-    transform: scale(1) rotate(0deg);
-    opacity: 0.3;
-  }
-  25% {
-    transform: scale(1.1) rotate(90deg);
-    opacity: 0.6;
-  }
-  50% {
-    transform: scale(0.9) rotate(180deg);
-    opacity: 0.4;
-  }
-  75% {
-    transform: scale(1.05) rotate(270deg);
-    opacity: 0.7;
-  }
-}
-
-@keyframes particle-float {
-  0% {
-    transform: translateY(0) scale(1);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-100vh) scale(0.5);
-    opacity: 0;
-  }
-}
-
-@keyframes wave-flow {
-  0% {
-    transform: translate(-50%, -50%) scaleY(0.5) rotate(0deg);
-  }
-  50% {
-    transform: translate(-50%, -50%) scaleY(1.2) rotate(180deg);
-  }
-  100% {
-    transform: translate(-50%, -50%) scaleY(0.8) rotate(360deg);
-  }
-}
+    .data-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
 
     .nexus-digital {
       position: relative;
@@ -1104,14 +986,15 @@
     </div>
 
     <!-- Data Visualization Module - Completely Redesigned -->
-<!-- Quantum Canvas Module -->
-<div class="module data-module" id="data-module">
-  <div class="data-container">
-    <div class="quantum-canvas" id="nexus-digital">
-      <!-- Quantum elements will be added dynamically -->
+    <div class="module data-module" id="data-module">
+      <div class="data-container">
+        <div class="nexus-title">NEXUS DIGITAL</div>
+        <div class="nexus-digital" id="nexus-digital">
+          <div class="nexus-core"></div>
+          <!-- Layers, beams and nodes will be added dynamically -->
+        </div>
+      </div>
     </div>
-  </div>
-</div>
   </div>
 
   <!-- Visual effects layers -->
@@ -1867,226 +1750,249 @@
     }
 
     // ===== MUSIC MODULE =====
-// Add to state object (line 50 approximately)
-playedTracks: [],
+    function initMusicPlayer() {
+      // Create visualizer bars
+      const visualizer = document.getElementById('music-visualizer');
+      visualizer.innerHTML = '';
+      state.visualizerBars = [];
+      
+      const barCount = 32;
+      for (let i = 0; i < barCount; i++) {
+        const bar = document.createElement('div');
+        bar.className = 'visualizer-bar';
+        visualizer.appendChild(bar);
+        state.visualizerBars.push(bar);
+      }
+      
+      // Initialize with first track
+      state.currentTrackIndex = Math.floor(Math.random() * CONFIG.playlist.length);
+      updateMusicDisplay();
+      playCurrentTrack();
+      
+      // Set up audio context for visualization
+      try {
+        state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        state.audioAnalyser = state.audioContext.createAnalyser();
+        state.audioAnalyser.fftSize = 64;
+        state.audioData = new Uint8Array(state.audioAnalyser.frequencyBinCount);
+        
+        const audioElement = document.getElementById('background-music');
+        state.audioSource = state.audioContext.createMediaElementSource(audioElement);
+        state.audioSource.connect(state.audioAnalyser);
+        state.audioAnalyser.connect(state.audioContext.destination);
+      } catch (e) {
+        console.log('Web Audio API not supported or blocked by autoplay policy');
+      }
+    }
 
-function initMusicPlayer() {
-  // Create visualizer bars
-  const visualizer = document.getElementById('music-visualizer');
-  visualizer.innerHTML = '';
-  state.visualizerBars = [];
-  
-  const barCount = 32;
-  for (let i = 0; i < barCount; i++) {
-    const bar = document.createElement('div');
-    bar.className = 'visualizer-bar';
-    visualizer.appendChild(bar);
-    state.visualizerBars.push(bar);
-  }
-  
-  // Initialize played tracks array
-  state.playedTracks = [];
-  
-  // Start with random track
-  selectNextTrack();
+    function updateMusicDisplay() {
+      const track = CONFIG.playlist[state.currentTrackIndex];
+      
+      const titleElement = document.getElementById('song-title');
+      titleElement.textContent = track.title;
+      titleElement.setAttribute('data-text', track.title);
+      
+      document.getElementById('artist-name').textContent = track.artist;
+      document.getElementById('album-name').textContent = track.album;
+      document.getElementById('album-cover-img').src = track.cover;
+    }
+
+    function playCurrentTrack() {
+      const track = CONFIG.playlist[state.currentTrackIndex];
+      const audioElement = document.getElementById('background-music');
+      
+      audioElement.src = track.file;
+      audioElement.volume = 0.5;
+      
+      audioElement.play().catch(err => {
+        console.log("Auto-play blocked: " + err.message);
+      });
+      
+      audioElement.onended = function() {
+  // Move to next track
+  state.currentTrackIndex = (state.currentTrackIndex + 1) % CONFIG.playlist.length;
   updateMusicDisplay();
   playCurrentTrack();
-  
-  // Set up audio context for visualization
-  try {
-    state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    state.audioAnalyser = state.audioContext.createAnalyser();
-    state.audioAnalyser.fftSize = 128;
-    state.audioData = new Uint8Array(state.audioAnalyser.frequencyBinCount);
-    
-    const audioElement = document.getElementById('background-music');
-    state.audioSource = state.audioContext.createMediaElementSource(audioElement);
-    state.audioSource.connect(state.audioAnalyser);
-    state.audioAnalyser.connect(state.audioContext.destination);
-  } catch (e) {
-    console.log('Web Audio API not supported or blocked by autoplay policy');
-  }
-}
+};
 
-function selectNextTrack() {
-  // If all tracks have been played, reset the list
-  if (state.playedTracks.length >= CONFIG.playlist.length) {
-    state.playedTracks = [];
-  }
-  
-  // Find unplayed tracks
-  const unplayedTracks = [];
-  for (let i = 0; i < CONFIG.playlist.length; i++) {
-    if (!state.playedTracks.includes(i)) {
-      unplayedTracks.push(i);
     }
-  }
-  
-  // Select random from unplayed tracks
-  if (unplayedTracks.length > 0) {
-    const randomIndex = Math.floor(Math.random() * unplayedTracks.length);
-    state.currentTrackIndex = unplayedTracks[randomIndex];
-    state.playedTracks.push(state.currentTrackIndex);
-  } else {
-    // Fallback (shouldn't happen)
-    state.currentTrackIndex = 0;
-    state.playedTracks = [0];
-  }
-}
 
-function updateMusicDisplay() {
-  const track = CONFIG.playlist[state.currentTrackIndex];
-  
-  const titleElement = document.getElementById('song-title');
-  titleElement.textContent = track.title;
-  titleElement.setAttribute('data-text', track.title);
-  
-  document.getElementById('artist-name').textContent = track.artist;
-  document.getElementById('album-name').textContent = track.album;
-  document.getElementById('album-cover-img').src = track.cover;
-}
-
-function playCurrentTrack() {
-  const track = CONFIG.playlist[state.currentTrackIndex];
-  const audioElement = document.getElementById('background-music');
-  
-  audioElement.src = track.file;
-  audioElement.volume = 0.5;
-  
-  audioElement.play().catch(err => {
-    console.log("Auto-play blocked: " + err.message);
-  });
-  
-  audioElement.onended = function() {
-    selectNextTrack();
-    updateMusicDisplay();
-    playCurrentTrack();
-  };
-}
-function updateMusicVisualizer() {
-  if (!state.audioAnalyser || !state.audioData || !state.visualizerBars.length) {
-    // Fallback animation when no audio analysis
-    state.visualizerBars.forEach((bar, index) => {
-      const height = 2 + Math.sin(Date.now() * 0.01 + index * 0.5) * 3;
-      bar.style.height = `${height}vmin`;
-      bar.style.backgroundColor = `hsl(${180 + Math.sin(Date.now() * 0.005 + index) * 30}, 100%, 50%)`;
-    });
-    return;
-  }
-  
-  // Get frequency data
-  state.audioAnalyser.getByteFrequencyData(state.audioData);
-  
-  // Calculate average for beat detection
-  let sum = 0;
-  for (let i = 0; i < state.audioData.length; i++) {
-    sum += state.audioData[i];
-  }
-  const average = sum / state.audioData.length;
-  
-  // Beat detection threshold
-  const beatThreshold = 128;
-  const isBeat = average > beatThreshold;
-  
-  // Update album art based on beats
-  const albumArt = document.querySelector('.album-art');
-  if (isBeat) {
-    albumArt.style.transform = 'translateZ(50px) scale(1.05)';
-    albumArt.style.boxShadow = '0 0 80px rgba(0, 229, 255, 0.6)';
-  } else {
-    albumArt.style.transform = 'translateZ(50px) scale(1)';
-    albumArt.style.boxShadow = '0 0 50px rgba(0, 229, 255, 0.2)';
-  }
-  
-  // Update visualizer bars with beat emphasis
-  const barCount = state.visualizerBars.length;
-  for (let i = 0; i < barCount; i++) {
-    const index = Math.floor(i * state.audioData.length / barCount);
-    const value = state.audioData[index];
-    let height = (value / 255) * 8;
-    
-    // Emphasize on beats
-    if (isBeat) {
-      height *= 1.5;
+    function updateMusicVisualizer() {
+      if (!state.audioAnalyser || !state.audioData || !state.visualizerBars.length) return;
+      
+      // Get frequency data
+      state.audioAnalyser.getByteFrequencyData(state.audioData);
+      
+      // Update visualizer bars
+      const barCount = state.visualizerBars.length;
+      for (let i = 0; i < barCount; i++) {
+        const index = Math.floor(i * state.audioData.length / barCount);
+        const value = state.audioData[index];
+        const height = (value / 255) * 8; // Max height 8vmin
+        
+        state.visualizerBars[i].style.height = `${height}vmin`;
+        
+        // Color based on frequency
+        const hue = 180 + (value / 255) * 20; // Cyan range
+        state.visualizerBars[i].style.backgroundColor = `hsl(${hue}, 100%, 50%)`;
+      }
     }
-    
-    state.visualizerBars[i].style.height = `${Math.max(height, 0.5)}vmin`;
-    
-    // Dynamic color based on frequency and beats
-    let hue = 180 + (value / 255) * 60;
-    if (isBeat) {
-      hue = 300 + Math.sin(Date.now() * 0.01) * 60; // Pink-purple range on beats
-    }
-    
-    state.visualizerBars[i].style.backgroundColor = `hsl(${hue}, 100%, ${50 + (value / 255) * 30}%)`;
-    state.visualizerBars[i].style.boxShadow = isBeat ? `0 0 10px hsl(${hue}, 100%, 50%)` : 'none';
-  }
-}
 
     // ===== DATA VISUALIZATION MODULE - COMPLETELY REDESIGNED =====
-function initDataVisualization() {
-  const container = document.getElementById('nexus-digital');
-  container.innerHTML = '';
-  container.className = 'quantum-canvas';
-  
-  // Add title
-  const title = document.createElement('div');
-  title.className = 'quantum-title';
-  title.textContent = 'QUANTUM CANVAS';
-  container.appendChild(title);
-  
-  // Create quantum field
-  const field = document.createElement('div');
-  field.className = 'quantum-field';
-  container.appendChild(field);
-  
-  // Create floating particles
-  for (let i = 0; i < 50; i++) {
-    const particle = document.createElement('div');
-    particle.className = 'quantum-particle';
-    particle.style.left = `${Math.random() * 100}%`;
-    particle.style.top = `${Math.random() * 100}%`;
-    particle.style.animationDelay = `${Math.random() * 10}s`;
-    particle.style.animation = `particle-float ${10 + Math.random() * 10}s infinite linear ${Math.random() * 5}s`;
-    container.appendChild(particle);
-  }
-  
-  // Create energy waves
-  for (let i = 0; i < 12; i++) {
-    const wave = document.createElement('div');
-    wave.className = 'quantum-wave';
-    wave.style.transform = `translate(-50%, -50%) rotate(${i * 30}deg)`;
-    wave.style.animationDelay = `${i * 0.5}s`;
-    wave.style.animation = `wave-flow ${8 + Math.random() * 4}s infinite ease-in-out ${i * 0.3}s`;
-    container.appendChild(wave);
-  }
-  
-  // Create spiral elements
-  for (let i = 0; i < 8; i++) {
-    const spiral = document.createElement('div');
-    spiral.className = 'quantum-spiral';
-    spiral.style.transform = `translate(-50%, 0) rotate(${i * 45}deg)`;
-    spiral.style.animationDelay = `${i * 0.8}s`;
-    spiral.style.animation = `spin ${20 + i * 5}s linear infinite`;
-    container.appendChild(spiral);
-  }
-}
-
-function animateDataVisualization() {
-  // The quantum canvas is self-animating through CSS
-  // This function can be used for additional dynamic effects
-  const particles = document.querySelectorAll('.quantum-particle');
-  
-  // Randomly regenerate some particles
-  const particlesToUpdate = Math.floor(Math.random() * 5) + 1;
-  for (let i = 0; i < particlesToUpdate; i++) {
-    const randomParticle = particles[Math.floor(Math.random() * particles.length)];
-    if (randomParticle) {
-      randomParticle.style.left = `${Math.random() * 100}%`;
-      randomParticle.style.top = `${Math.random() * 100}%`;
+    function initDataVisualization() {
+      const container = document.getElementById('nexus-digital');
+      container.innerHTML = '<div class="nexus-core"></div>';
+      
+      state.nexusLayers = [];
+      state.nexusNodes = [];
+      state.nexusBeams = [];
+      
+      // Create layers
+      const layerCount = 5;
+      for (let i = 0; i < layerCount; i++) {
+        const layer = document.createElement('div');
+        layer.className = 'nexus-layer';
+        
+        // Size decreases with each layer
+        const size = 100 - i * 15;
+        layer.style.width = `${size}%`;
+        layer.style.height = `${size}%`;
+        layer.style.top = `${(100 - size) / 2}%`;
+        layer.style.left = `${(100 - size) / 2}%`;
+        
+        // Add rotation animation
+        const direction = i % 2 === 0 ? 'normal' : 'reverse';
+        const duration = 30 + i * 20;
+        layer.style.animation = `spin ${duration}s linear infinite ${direction}`;
+        
+        container.appendChild(layer);
+        state.nexusLayers.push(layer);
+      }
+      
+      // Create nodes
+      const nodeData = [
+        { name: "QUANTUM", value: "98.7%", type: "CORE" },
+        { name: "NEURAL", value: "76.3%", type: "NETWORK" },
+        { name: "TEMPORAL", value: "45.2%", type: "FLUX" },
+        { name: "SPATIAL", value: "89.1%", type: "GRID" },
+        { name: "ENERGY", value: "67.8%", type: "FIELD" },
+        { name: "DATA", value: "94.5%", type: "STREAM" },
+        { name: "MEMORY", value: "82.3%", type: "BANK" },
+        { name: "FUSION", value: "55.9%", type: "CORE" }
+      ];
+      
+      for (let i = 0; i < nodeData.length; i++) {
+        // Create node
+        const node = document.createElement('div');
+        node.className = 'nexus-node';
+        
+        // Position on random layer
+        const layerIndex = Math.floor(Math.random() * layerCount);
+        const layer = state.nexusLayers[layerIndex];
+        
+        // Calculate position on the layer (circular)
+        const angle = (i / nodeData.length) * Math.PI * 2;
+        const radius = parseInt(layer.style.width) / 2;
+        const x = 50 + Math.cos(angle) * radius * 0.8;
+        const y = 50 + Math.sin(angle) * radius * 0.8;
+        
+        node.style.left = `${x}%`;
+        node.style.top = `${y}%`;
+        
+        // Size based on "importance"
+        const size = 1.5 + Math.random();
+        node.style.width = `${size}vmin`;
+        node.style.height = `${size}vmin`;
+        
+        // Add pulsing animation
+        node.style.animation = `pulse ${3 + Math.random() * 2}s infinite ease-in-out ${Math.random() * 2}s`;
+        
+        // Add info tooltip
+        const info = document.createElement('div');
+        info.className = 'nexus-info';
+        info.innerHTML = `${nodeData[i].name}: ${nodeData[i].value}<br>${nodeData[i].type}`;
+        info.style.top = `${size * 1.5}vmin`;
+        node.appendChild(info);
+        
+        // Add pulse effect
+        const pulse = document.createElement('div');
+        pulse.className = 'nexus-pulse';
+        pulse.style.animationDelay = `${Math.random() * 3}s`;
+        node.appendChild(pulse);
+        
+        container.appendChild(node);
+        state.nexusNodes.push({
+          element: node,
+          info: info,
+          x: x,
+          y: y,
+          layerIndex: layerIndex
+        });
+      }
+      
+      // Create beams connecting to core
+      for (let i = 0; i < state.nexusNodes.length; i++) {
+        const node = state.nexusNodes[i];
+        
+        // Calculate beam length and angle
+        const dx = node.x - 50;
+        const dy = node.y - 50;
+        const length = Math.sqrt(dx * dx + dy * dy) * container.offsetWidth / 100;
+        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+        
+        // Create beam
+        const beam = document.createElement('div');
+        beam.className = 'nexus-beam';
+        beam.style.width = `${length}px`;
+        beam.style.transform = `rotate(${angle}deg)`;
+        
+        container.appendChild(beam);
+        state.nexusBeams.push({
+          element: beam,
+          node: node,
+          length: length,
+          angle: angle
+        });
+      }
     }
-  }
-}
+
+    function animateDataVisualization() {
+      if (!state.nexusNodes || !state.nexusNodes.length) return;
+      
+      // Show random node info
+      state.nexusNodes.forEach(node => {
+        node.info.classList.remove('active');
+      });
+      
+      const randomNodes = [];
+      const nodeCount = Math.floor(Math.random() * 3) + 1;
+      
+      for (let i = 0; i < nodeCount; i++) {
+        const randomIndex = Math.floor(Math.random() * state.nexusNodes.length);
+        if (!randomNodes.includes(state.nexusNodes[randomIndex])) {
+          randomNodes.push(state.nexusNodes[randomIndex]);
+        }
+      }
+      
+      randomNodes.forEach(node => {
+        node.info.classList.add('active');
+      });
+      
+      // Animate beams
+      state.nexusBeams.forEach(beam => {
+        const isActive = randomNodes.includes(beam.node);
+        
+        if (isActive) {
+          beam.element.style.backgroundColor = 'rgba(255, 0, 170, 0.8)';
+          beam.element.style.boxShadow = '0 0 10px rgba(255, 0, 170, 0.5)';
+          beam.element.style.height = '2px';
+        } else {
+          beam.element.style.backgroundColor = 'rgba(0, 229, 255, 0.3)';
+          beam.element.style.boxShadow = 'none';
+          beam.element.style.height = '1px';
+        }
+      });
+    }
 
     // ===== MODULE MANAGEMENT =====
 function showModule(index) {
@@ -2106,10 +2012,7 @@ function showModule(index) {
   } else if (moduleId === 'data-module') {
     animateDataVisualization();
   } else if (moduleId === 'weather-module') {
-    fetchWeatherData();
-  } else if (moduleId === 'music-module') {
-    // Ensure music info is current when module shows
-    updateMusicDisplay();
+    fetchWeatherData(); // 🔄 Actualizar clima en cada aparición
   }
 }
 
