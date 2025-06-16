@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chronos Nexus | Instalación Artística Digital v5.0</title>
+  <title>Chronos Nexus | Instalación Artística Digital v6.0</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Jost:wght@200;300;400;500&display=swap');
 
@@ -979,7 +979,7 @@
     <div class="loading-text glitch" data-text="CHRONOS NEXUS">CHRONOS NEXUS</div>
   </div>
 
-  <audio id="background-music" loop autoplay preload="auto" muted></audio>
+  <audio id="background-music" loop autoplay preload="auto"></audio>
 
   <div class="canvas-container">
     <canvas id="background-canvas"></canvas>
@@ -2483,6 +2483,20 @@ window.addEventListener('click', () => {
     state.audioContext.resume();
   }
 });
+
+    window.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('click', () => {
+    const audioElement = document.getElementById('background-music');
+    if (audioElement.paused) {
+      audioElement.play().then(() => {
+        console.log("✅ Música iniciada tras interacción del usuario");
+      }).catch(err => {
+        console.warn("⚠️ No se pudo iniciar la música:", err);
+      });
+    }
+  }, { once: true });
+});
+
 
 
     // Start everything
