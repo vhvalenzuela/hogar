@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chronos Nexus | Instalación Artística Digital v3.0</title>
+  <title>Chronos Nexus | Instalación Artística Digital v4.0</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Jost:wght@200;300;400;500&display=swap');
 
@@ -911,11 +911,60 @@
   100% { transform: rotateZ(360deg) translateZ(0); }
 }
 
+/* Tunnel Module - Enhanced with palette colors */
+.tunnel-module {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  perspective: 1500px;
+  background: linear-gradient(45deg, var(--color-bg) 0%, var(--color-dark) 100%);
+}
+
 .tunnel-module canvas {
   width: 100%;
   height: 100%;
   display: block;
-  background-color: #001f2f; /* oscuro en alianza con tu paleta azul/verde */
+  background: radial-gradient(ellipse at center, 
+    rgba(0, 229, 255, 0.1) 0%, 
+    rgba(255, 0, 170, 0.05) 30%, 
+    var(--color-bg) 70%);
+  filter: contrast(1.2) brightness(1.1);
+}
+
+/* Tunnel overlay effects */
+.tunnel-module::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, 
+    transparent 40%, 
+    rgba(0, 229, 255, 0.1) 60%, 
+    rgba(255, 0, 170, 0.2) 80%, 
+    var(--color-bg) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tunnel-module::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(0deg, 
+    var(--color-bg) 0%, 
+    transparent 20%, 
+    transparent 80%, 
+    var(--color-bg) 100%);
+  pointer-events: none;
+  z-index: 2;
 }
 
   </style>
@@ -1828,24 +1877,46 @@ function initTunnel() {
 
   const SEGMENTS = 200;
   const SPEED_BASE = 5;
-  const LANE_COUNT = 6;
+  const LANE_COUNT = 8;
   const stars = [];
   const lines = [];
+  const particles = [];
+
+  // Colores de la paleta
+  const colors = {
+    primary: '#00e5ff',
+    secondary: '#ff00aa',
+    accent: '#f2f2f2',
+    dark: '#121212'
+  };
 
   for (let i = 0; i < SEGMENTS; i++) {
     lines.push({
       z: i * 10,
-      curve: Math.sin(i * 0.15),
-      width: 1 + Math.sin(i * 0.05) * 0.5,
-      colorIndex: i % 3
+      curve: Math.sin(i * 0.15) * 0.5,
+      width: 1 + Math.sin(i * 0.05) * 0.3,
+      colorIndex: i % 3,
+      intensity: Math.random()
     });
   }
 
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 150; i++) {
     stars.push({
       x: Math.random() * 2 - 1,
       y: Math.random() * 2 - 1,
-      z: Math.random() * 1000
+      z: Math.random() * 1000,
+      twinkle: Math.random() * Math.PI * 2
+    });
+  }
+
+  // Partículas adicionales
+  for (let i = 0; i < 50; i++) {
+    particles.push({
+      x: Math.random() * 2 - 1,
+      y: Math.random() * 2 - 1,
+      z: Math.random() * 500,
+      speed: 1 + Math.random() * 3,
+      color: Math.random() > 0.5 ? colors.primary : colors.secondary
     });
   }
 
@@ -1853,57 +1924,119 @@ function initTunnel() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const w = canvas.width;
     const h = canvas.height;
-    const roadW = w * 0.8;
+    const roadW = w * 0.9;
+    const time = performance.now() * 0.001;
 
-    // 🔊 Vincula con el FFT de música
+    // Velocidad basada en música
     let fftSpeed = SPEED_BASE;
+    let bassIntensity = 0;
     if (state.audioAnalyser && state.audioData) {
       state.audioAnalyser.getByteFrequencyData(state.audioData);
-      const bass = state.audioData.slice(0, 8).reduce((a, b) => a + b, 0) / 8;
-      fftSpeed = SPEED_BASE + (bass / 255) * 15; // más velocidad si hay bajos fuertes
+      const bass = state.audioData.slice(0, 12).reduce((a, b) => a + b, 0) / 12;
+      bassIntensity = bass / 255;
+      fftSpeed = SPEED_BASE + bassIntensity * 20;
     }
 
-    // 🌌 Fondo de estrellas
+    // Fondo con gradiente dinámico
+    const gradient = ctx.createRadialGradient(w/2, h/2, 0, w/2, h/2, Math.max(w, h));
+    gradient.addColorStop(0, `rgba(0, 229, 255, ${0.1 + bassIntensity * 0.2})`);
+    gradient.addColorStop(0.5, `rgba(255, 0, 170, ${0.05 + bassIntensity * 0.1})`);
+    gradient.addColorStop(1, '#080808');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, w, h);
+
+    // Estrellas con parpadeo
     stars.forEach(star => {
-      star.z -= fftSpeed * 0.5;
+      star.z -= fftSpeed * 0.8;
+      star.twinkle += 0.1;
       if (star.z < 1) {
         star.z = 1000;
         star.x = Math.random() * 2 - 1;
         star.y = Math.random() * 2 - 1;
       }
 
-      const scale = 300 / star.z;
-      const x = w / 2 + star.x * scale * w;
-      const y = h / 2 + star.y * scale * h;
+      const scale = 400 / star.z;
+      const x = w / 2 + star.x * scale * w * 0.8;
+      const y = h / 2 + star.y * scale * h * 0.8;
+      const alpha = (0.3 + Math.sin(star.twinkle) * 0.3) * (1 - star.z / 1000);
 
       ctx.beginPath();
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.arc(x, y, 0.5 + scale * 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(0, 229, 255, ${alpha})`;
+      ctx.arc(x, y, 0.5 + scale * 2, 0, Math.PI * 2);
       ctx.fill();
     });
 
-    // 🛣 Dibujar segmentos de la pista
-    lines.forEach(line => {
+    // Partículas flotantes
+    particles.forEach(particle => {
+      particle.z -= fftSpeed * particle.speed;
+      if (particle.z < 1) {
+        particle.z = 500;
+        particle.x = Math.random() * 2 - 1;
+        particle.y = Math.random() * 2 - 1;
+      }
+
+      const scale = 300 / particle.z;
+      const x = w / 2 + particle.x * scale * w;
+      const y = h / 2 + particle.y * scale * h;
+
+      ctx.beginPath();
+      ctx.fillStyle = particle.color;
+      ctx.arc(x, y, 1 + scale * 3, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // Pista principal con efectos mejorados
+    lines.forEach((line, index) => {
       line.z -= fftSpeed;
       if (line.z < 1) line.z += SEGMENTS * 10;
 
-      const scale = 300 / line.z;
-      const x = w / 2 + Math.sin(line.curve + performance.now() * 0.001) * 150 * scale;
-      const y = h / 2 + scale * 100;
+      const scale = 400 / line.z;
+      const curvature = Math.sin(line.curve + time * 2) * 100 * scale;
+      const x = w / 2 + curvature;
+      const y = h / 2 + scale * 120;
       const width = roadW * scale * line.width;
 
-      // Dibuja carriles tipo LED
+      // Efecto de profundidad
+      const depth = 1 - (line.z / (SEGMENTS * 10));
+      const alpha = depth * (0.5 + bassIntensity * 0.5);
+
+      // Carriles con colores alternados de la paleta
       for (let i = 0; i < LANE_COUNT; i++) {
         const laneX = x - width / 2 + (i / LANE_COUNT) * width;
-        const color = i % 2 === 0 ? 'var(--color-accent)' : 'var(--color-accent-alt)';
+        const laneWidth = width / LANE_COUNT * 0.7;
+        
+        let color;
+        if (i % 3 === 0) {
+          color = `rgba(0, 229, 255, ${alpha})`;
+        } else if (i % 3 === 1) {
+          color = `rgba(255, 0, 170, ${alpha})`;
+        } else {
+          color = `rgba(242, 242, 242, ${alpha * 0.5})`;
+        }
 
+        // Efecto de brillo en los carriles
+        const glowIntensity = bassIntensity * 10;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = glowIntensity;
+        
         ctx.beginPath();
         ctx.moveTo(laneX, y);
-        ctx.lineTo(laneX + width / LANE_COUNT * 0.8, y);
+        ctx.lineTo(laneX + laneWidth, y);
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = Math.max(1, 3 * scale);
         ctx.stroke();
+        
+        ctx.shadowBlur = 0;
       }
+
+      // Líneas laterales de la pista
+      const sideAlpha = alpha * 0.8;
+      ctx.strokeStyle = `rgba(0, 229, 255, ${sideAlpha})`;
+      ctx.lineWidth = 2 * scale;
+      ctx.beginPath();
+      ctx.moveTo(x - width/2, y);
+      ctx.lineTo(x + width/2, y);
+      ctx.stroke();
     });
 
     requestAnimationFrame(drawTunnel);
@@ -1936,7 +2069,9 @@ function initMusicPlayer() {
 
   // Inicializa la cola aleatoria
   resetMusicQueue();
-  playNextTrack();
+  
+  // Intenta reproducir inmediatamente
+  attemptAutoplay();
 
   try {
     state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -1951,6 +2086,31 @@ function initMusicPlayer() {
   } catch (e) {
     console.log('Web Audio API not supported or blocked by autoplay policy');
   }
+}
+
+function attemptAutoplay() {
+  const audioElement = document.getElementById('background-music');
+  const track = CONFIG.playlist[state.currentTrackIndex];
+  
+  audioElement.src = track.file;
+  audioElement.volume = 0.5;
+  audioElement.muted = true; // Inicia silenciado para evitar bloqueo
+  
+  updateMusicDisplay();
+  
+  // Intenta reproducir silenciado primero
+  audioElement.play().then(() => {
+    console.log("Música iniciada (silenciada)");
+    // Después de 1 segundo, quita el silencio
+    setTimeout(() => {
+      audioElement.muted = false;
+      console.log("Audio activado");
+    }, 1000);
+  }).catch(err => {
+    console.log("Autoplay bloqueado, esperando interacción del usuario");
+  });
+  
+  audioElement.onended = playNextTrack;
 }
 
 function resetMusicQueue() {
@@ -2105,26 +2265,48 @@ function initDataVisualization() {
 
     // ===== MODULE MANAGEMENT =====
 function showModule(index) {
-  // Hide all modules
-  document.querySelectorAll('.module').forEach(module => {
-    module.classList.remove('active');
-  });
+  const currentModuleElement = document.querySelector('.module.active');
+  const nextModuleId = CONFIG.modules[index];
+  const nextModuleElement = document.getElementById(nextModuleId);
 
-  // Show selected module
-  const moduleId = CONFIG.modules[index];
-  document.getElementById(moduleId).classList.add('active');
+  // Si hay un módulo activo, aplicar transición de salida
+  if (currentModuleElement) {
+    currentModuleElement.style.transition = 'opacity 1s ease-out, transform 1s ease-out';
+    currentModuleElement.style.opacity = '0';
+    currentModuleElement.style.transform = 'translateY(-20px) scale(0.95)';
+    
+    setTimeout(() => {
+      currentModuleElement.classList.remove('active');
+      currentModuleElement.style.transform = 'translateY(20px) scale(0.95)';
+    }, 500);
+  }
+
+  // Mostrar el siguiente módulo con transición de entrada
+  setTimeout(() => {
+    nextModuleElement.style.transition = 'opacity 1.5s ease-in, transform 1.5s ease-in';
+    nextModuleElement.classList.add('active');
+    
+    // Forzar reflow para asegurar la transición
+    nextModuleElement.offsetHeight;
+    
+    nextModuleElement.style.opacity = '1';
+    nextModuleElement.style.transform = 'translateY(0) scale(1)';
+  }, currentModuleElement ? 600 : 0);
+
   state.currentModule = index;
 
-  // Special handling for certain modules
-  if (moduleId === 'photo-module') {
-    rotatePhotos();
-  } else if (moduleId === 'data-module') {
-    animateDataVisualization();
-  } else if (moduleId === 'weather-module') {
-    fetchWeatherData(); // 🔄 Actualizar clima en cada aparición
-  } else if (moduleId === 'music-module') {
-  updateMusicDisplay(); // 🔄 Refresca visualización siempre
-}
+  // Manejo especial para ciertos módulos
+  setTimeout(() => {
+    if (nextModuleId === 'photo-module') {
+      rotatePhotos();
+    } else if (nextModuleId === 'data-module') {
+      animateDataVisualization();
+    } else if (nextModuleId === 'weather-module') {
+      fetchWeatherData();
+    } else if (nextModuleId === 'music-module') {
+      updateMusicDisplay();
+    }
+  }, currentModuleElement ? 800 : 100);
 }
 
 
@@ -2187,25 +2369,39 @@ function showModule(index) {
       }, 3000);
       
       // Add click event to start audio
-      document.addEventListener('click', () => {
-        const audioElement = document.getElementById('background-music');
-        if (audioElement.paused) {
-          audioElement.play().catch(error => {
-            console.log("Error starting audio after click: " + error.message);
-          });
-        }
-        
-        // Try to enter fullscreen
-        try {
-          if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(err => {
-              console.log(`Error attempting to enable fullscreen: ${err.message}`);
-            });
-          }
-        } catch (error) {
-          console.log("Error toggling fullscreen: " + error.message);
-        }
+      // Add click event to start audio - Enhanced
+document.addEventListener('click', () => {
+  const audioElement = document.getElementById('background-music');
+  
+  // Fuerza la reproducción si está pausada
+  if (audioElement.paused) {
+    audioElement.muted = false;
+    audioElement.play().then(() => {
+      console.log("Música iniciada por interacción del usuario");
+    }).catch(error => {
+      console.log("Error starting audio after click: " + error.message);
+    });
+  }
+  
+  // Resume audio context si está suspendido
+  if (state.audioContext && state.audioContext.state === 'suspended') {
+    state.audioContext.resume().then(() => {
+      console.log("Audio context resumed");
+    });
+  }
+  
+  // Try to enter fullscreen
+  try {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.log(`Error attempting to enable fullscreen: ${err.message}`);
       });
+    }
+  } catch (error) {
+    console.log("Error toggling fullscreen: " + error.message);
+  }
+}, { once: false }); // Permite múltiples clicks
+      
       
       // Hide loading screen
       setTimeout(() => {
