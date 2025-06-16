@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chronos Nexus | Instalación Artística Digital v4.0</title>
+  <title>Chronos Nexus | Instalación Artística Digital v5.0</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Jost:wght@200;300;400;500&display=swap');
 
@@ -979,7 +979,7 @@
     <div class="loading-text glitch" data-text="CHRONOS NEXUS">CHRONOS NEXUS</div>
   </div>
 
-  <audio id="background-music" loop></audio>
+  <audio id="background-music" loop autoplay preload="auto" muted></audio>
 
   <div class="canvas-container">
     <canvas id="background-canvas"></canvas>
@@ -2093,24 +2093,75 @@ function attemptAutoplay() {
   const track = CONFIG.playlist[state.currentTrackIndex];
   
   audioElement.src = track.file;
-  audioElement.volume = 0.5;
-  audioElement.muted = true; // Inicia silenciado para evitar bloqueo
+  audioElement.volume = 0.3; // Volumen más bajo inicialmente
+  audioElement.loop = false;
+  audioElement.preload = 'auto';
   
   updateMusicDisplay();
   
-  // Intenta reproducir silenciado primero
-  audioElement.play().then(() => {
-    console.log("Música iniciada (silenciada)");
-    // Después de 1 segundo, quita el silencio
-    setTimeout(() => {
-      audioElement.muted = false;
-      console.log("Audio activado");
-    }, 1000);
-  }).catch(err => {
-    console.log("Autoplay bloqueado, esperando interacción del usuario");
-  });
+  // Estrategia 1: Reproducir inmediatamente
+  const playPromise = audioElement.play();
+  
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      console.log("✅ Música iniciada automáticamente");
+      audioElement.volume = 0.5; // Subir volumen después de iniciar
+    }).catch(error => {
+      console.log("❌ Autoplay bloqueado, intentando estrategia alternativa");
+      
+      // Estrategia 2: Reproducir silenciado y luego activar
+      audioElement.muted = true;
+      audioElement.play().then(() => {
+        console.log("🔇 Música iniciada silenciada");
+        setTimeout(() => {
+          audioElement.muted = false;
+          audioElement.volume = 0.5;
+          console.log("🔊 Audio activado");
+        }, 2000);
+      }).catch(err => {
+        console.log("❌ Todas las estrategias de autoplay fallaron");
+        // Estrategia 3: Esperar primera interacción
+        setupUserInteractionHandler();
+      });
+    });
+  }
   
   audioElement.onended = playNextTrack;
+}
+
+function setupUserInteractionHandler() {
+  let interactionHandled = false;
+  
+  const startAudio = () => {
+    if (interactionHandled) return;
+    interactionHandled = true;
+    
+    const audioElement = document.getElementById('background-music');
+    audioElement.muted = false;
+    audioElement.volume = 0.5;
+    
+    audioElement.play().then(() => {
+      console.log("🎵 Música iniciada tras interacción del usuario");
+    }).catch(err => {
+      console.log("Error al iniciar música:", err);
+    });
+    
+    // Resume audio context
+    if (state.audioContext && state.audioContext.state === 'suspended') {
+      state.audioContext.resume();
+    }
+  };
+  
+  // Múltiples eventos para capturar cualquier interacción
+  const events = ['click', 'touchstart', 'keydown', 'mousemove', 'scroll'];
+  events.forEach(event => {
+    document.addEventListener(event, startAudio, { once: true, passive: true });
+  });
+  
+  // También intentar después de que se cargue completamente
+  window.addEventListener('load', () => {
+    setTimeout(startAudio, 1000);
+  }, { once: true });
 }
 
 function resetMusicQueue() {
@@ -2324,69 +2375,94 @@ function showModule(index) {
     }
 
     // ===== INITIALIZATION =====
-    async function init() {
-      // Initialize components
-      initTimeModule();
-      initPhotoModule();
-      initMusicPlayer();
-      initDataVisualization();
-      initTunnel();
+async function init() {
+  // Initialize components
+  initTimeModule();
+  initPhotoModule();
+  initMusicPlayer();
+  initDataVisualization();
+  initTunnel();
 
-      
-      // Start animation loop
-      animate();
-      
-      // Set up timers
-      setInterval(updateTime, 1000);
-      updateTime();
-      
-      // Display initial quote
-      displayRandomQuote();
-      
-      // Rotate quotes every 2 minutes
-      setInterval(displayRandomQuote, 120000);
-      
-      // Fetch weather data
-      await fetchWeatherData();
-      
-      // Update weather every 10 minutes
-      setInterval(fetchWeatherData, 600000);
-      
-      // Show first module
-      showModule(0);
-      
-      // Rotate modules
-      setInterval(rotateModules, CONFIG.moduleDuration);
-      
-      // Rotate photos every 10 seconds
-      setInterval(rotatePhotos, 10000);
-      
-      // Animate data visualization every 3 seconds when active
-      setInterval(() => {
-        if (CONFIG.modules[state.currentModule] === 'data-module') {
-          animateDataVisualization();
-        }
-      }, 3000);
-      
-      // Add click event to start audio
-      // Add click event to start audio - Enhanced
-document.addEventListener('click', () => {
+  // FORZAR REPRODUCCIÓN INMEDIATA
+  setTimeout(() => {
+    attemptAutoplay();
+  }, 500);
+
+  // Start animation loop
+  animate();
+  
+  // Set up timers
+  setInterval(updateTime, 1000);
+  updateTime();
+  
+  // Display initial quote
+  displayRandomQuote();
+  
+  // Rotate quotes every 2 minutes
+  setInterval(displayRandomQuote, 120000);
+  
+  // Fetch weather data
+  await fetchWeatherData();
+  
+  // Update weather every 10 minutes
+  setInterval(fetchWeatherData, 600000);
+  
+  // Show first module
+  showModule(0);
+  
+  // Rotate modules
+  setInterval(rotateModules, CONFIG.moduleDuration);
+  
+  // Rotate photos every 10 seconds
+  setInterval(rotatePhotos, 10000);
+  
+  // Animate data visualization every 3 seconds when active
+  setInterval(() => {
+    if (CONFIG.modules[state.currentModule] === 'data-module') {
+      animateDataVisualization();
+    }
+  }, 3000);
+  
+  // EVENTO CLICK MEJORADO PARA FORZAR AUDIO
+  document.addEventListener('click', forceAudioStart, { passive: true });
+  document.addEventListener('touchstart', forceAudioStart, { passive: true });
+  document.addEventListener('keydown', forceAudioStart, { passive: true });
+  
+  // Hide loading screen
+  setTimeout(() => {
+    document.getElementById('loading').classList.add('hidden');
+    // Intentar reproducir después de ocultar loading
+    setTimeout(attemptAutoplay, 1000);
+  }, 2000);
+  
+  // Último intento después de todo esté cargado
+  setTimeout(() => {
+    const audioElement = document.getElementById('background-music');
+    if (audioElement.paused) {
+      console.log("🔄 Último intento de reproducción automática");
+      attemptAutoplay();
+    }
+  }, 5000);
+}
+
+    function forceAudioStart() {
   const audioElement = document.getElementById('background-music');
   
-  // Fuerza la reproducción si está pausada
   if (audioElement.paused) {
     audioElement.muted = false;
+    audioElement.volume = 0.5;
+    
     audioElement.play().then(() => {
-      console.log("Música iniciada por interacción del usuario");
+      console.log("🎵 Música forzada por interacción");
     }).catch(error => {
-      console.log("Error starting audio after click: " + error.message);
+      console.log("Error forzando audio:", error.message);
     });
   }
   
   // Resume audio context si está suspendido
   if (state.audioContext && state.audioContext.state === 'suspended') {
     state.audioContext.resume().then(() => {
-      console.log("Audio context resumed");
+      console.log("🎧 Audio context reactivado");
     });
   }
   
@@ -2394,20 +2470,13 @@ document.addEventListener('click', () => {
   try {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(err => {
-        console.log(`Error attempting to enable fullscreen: ${err.message}`);
+        console.log(`Error fullscreen: ${err.message}`);
       });
     }
   } catch (error) {
     console.log("Error toggling fullscreen: " + error.message);
   }
-}, { once: false }); // Permite múltiples clicks
-      
-      
-      // Hide loading screen
-      setTimeout(() => {
-        document.getElementById('loading').classList.add('hidden');
-      }, 2000);
-    }
+}
 
 window.addEventListener('click', () => {
   if (state.audioContext && state.audioContext.state === 'suspended') {
