@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chronos Nexus | Instalación Artística Digital v5.0</title>
+  <title>Chronos Nexus | Instalación Artística Digital v7.0</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Jost:wght@200;300;400;500&display=swap');
 
@@ -979,7 +979,7 @@
     <div class="loading-text glitch" data-text="CHRONOS NEXUS">CHRONOS NEXUS</div>
   </div>
 
-  <audio id="background-music" loop autoplay preload="auto" muted></audio>
+  <audio id="background-music" preload="auto" crossorigin="anonymous"></audio>
 
   <div class="canvas-container">
     <canvas id="background-canvas"></canvas>
@@ -2070,9 +2070,7 @@ function initMusicPlayer() {
   // Inicializa la cola aleatoria
   resetMusicQueue();
   
-  // Intenta reproducir inmediatamente
-  attemptAutoplay();
-
+  // Configurar audio context
   try {
     state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
     state.audioAnalyser = state.audioContext.createAnalyser();
@@ -2083,85 +2081,113 @@ function initMusicPlayer() {
     state.audioSource = state.audioContext.createMediaElementSource(audioElement);
     state.audioSource.connect(state.audioAnalyser);
     state.audioAnalyser.connect(state.audioContext.destination);
+    
+    console.log("🎧 Audio context configurado");
   } catch (e) {
-    console.log('Web Audio API not supported or blocked by autoplay policy');
+    console.log('❌ Web Audio API no soportado:', e);
   }
+  
+  // Preparar el primer track
+  prepareFirstTrack();
 }
 
-function attemptAutoplay() {
+    function prepareFirstTrack() {
   const audioElement = document.getElementById('background-music');
   const track = CONFIG.playlist[state.currentTrackIndex];
   
   audioElement.src = track.file;
-  audioElement.volume = 0.3; // Volumen más bajo inicialmente
+  audioElement.volume = 0.5;
   audioElement.loop = false;
   audioElement.preload = 'auto';
   
   updateMusicDisplay();
   
-  // Estrategia 1: Reproducir inmediatamente
+  // Configurar eventos
+  audioElement.onended = playNextTrack;
+  audioElement.oncanplaythrough = () => {
+    console.log("🎵 Audio listo para reproducir");
+  };
+  
+  console.log("🎼 Track preparado:", track.title);
+}
+
+function attemptAutoplay() {
+  const audioElement = document.getElementById('background-music');
+  
+  console.log("🚀 Intentando reproducción automática...");
+  
+  // Verificar si ya está reproduciéndose
+  if (!audioElement.paused) {
+    console.log("✅ Audio ya está reproduciéndose");
+    return;
+  }
+  
+  // Estrategia principal: reproducir directamente
   const playPromise = audioElement.play();
   
   if (playPromise !== undefined) {
     playPromise.then(() => {
-      console.log("✅ Música iniciada automáticamente");
-      audioElement.volume = 0.5; // Subir volumen después de iniciar
-    }).catch(error => {
-      console.log("❌ Autoplay bloqueado, intentando estrategia alternativa");
+      console.log("✅ ÉXITO: Música reproduciéndose automáticamente");
+      audioElement.muted = false;
       
-      // Estrategia 2: Reproducir silenciado y luego activar
-      audioElement.muted = true;
-      audioElement.play().then(() => {
-        console.log("🔇 Música iniciada silenciada");
-        setTimeout(() => {
-          audioElement.muted = false;
-          audioElement.volume = 0.5;
-          console.log("🔊 Audio activado");
-        }, 2000);
-      }).catch(err => {
-        console.log("❌ Todas las estrategias de autoplay fallaron");
-        // Estrategia 3: Esperar primera interacción
-        setupUserInteractionHandler();
-      });
+      // Reactivar contexto de audio si es necesario
+      if (state.audioContext && state.audioContext.state === 'suspended') {
+        state.audioContext.resume().then(() => {
+          console.log("🎧 Audio context reactivado");
+        });
+      }
+      
+    }).catch(error => {
+      console.log("❌ Autoplay bloqueado:", error.message);
+      console.log("⏳ Esperando interacción del usuario...");
     });
   }
-  
-  audioElement.onended = playNextTrack;
 }
 
-function setupUserInteractionHandler() {
-  let interactionHandled = false;
+function forceAudioStart(event) {
+  const audioElement = document.getElementById('background-music');
   
-  const startAudio = () => {
-    if (interactionHandled) return;
-    interactionHandled = true;
-    
-    const audioElement = document.getElementById('background-music');
-    audioElement.muted = false;
-    audioElement.volume = 0.5;
-    
-    audioElement.play().then(() => {
-      console.log("🎵 Música iniciada tras interacción del usuario");
+  console.log("👆 Interacción detectada:", event?.type || 'manual');
+  
+  // Si ya está reproduciéndose, no hacer nada
+  if (!audioElement.paused) {
+    console.log("✅ Audio ya está activo");
+    return;
+  }
+  
+  // Asegurar que no esté silenciado
+  audioElement.muted = false;
+  audioElement.volume = 0.5;
+  
+  // Reactivar contexto de audio ANTES de reproducir
+  if (state.audioContext && state.audioContext.state === 'suspended') {
+    state.audioContext.resume().then(() => {
+      console.log("🎧 Audio context reactivado");
+      // Reproducir después de reactivar el contexto
+      startPlayback();
     }).catch(err => {
-      console.log("Error al iniciar música:", err);
+      console.log("❌ Error reactivando contexto:", err);
+      startPlayback(); // Intentar de todos modos
     });
-    
-    // Resume audio context
-    if (state.audioContext && state.audioContext.state === 'suspended') {
-      state.audioContext.resume();
-    }
-  };
+  } else {
+    startPlayback();
+  }
   
-  // Múltiples eventos para capturar cualquier interacción
-  const events = ['click', 'touchstart', 'keydown', 'mousemove', 'scroll'];
-  events.forEach(event => {
-    document.addEventListener(event, startAudio, { once: true, passive: true });
-  });
-  
-  // También intentar después de que se cargue completamente
-  window.addEventListener('load', () => {
-    setTimeout(startAudio, 1000);
-  }, { once: true });
+  function startPlayback() {
+    audioElement.play().then(() => {
+      console.log("🎵 ¡MÚSICA INICIADA EXITOSAMENTE!");
+    }).catch(error => {
+      console.log("❌ Error iniciando música:", error.message);
+      
+      // Último recurso: recargar el audio
+      setTimeout(() => {
+        const currentSrc = audioElement.src;
+        audioElement.src = '';
+        audioElement.src = currentSrc;
+        audioElement.play().catch(e => console.log("❌ Último intento falló:", e));
+      }, 1000);
+    });
+  }
 }
 
 function resetMusicQueue() {
@@ -2376,17 +2402,14 @@ function showModule(index) {
 
     // ===== INITIALIZATION =====
 async function init() {
+  console.log("🚀 Iniciando Chronos Nexus...");
+  
   // Initialize components
   initTimeModule();
   initPhotoModule();
   initMusicPlayer();
   initDataVisualization();
   initTunnel();
-
-  // FORZAR REPRODUCCIÓN INMEDIATA
-  setTimeout(() => {
-    attemptAutoplay();
-  }, 500);
 
   // Start animation loop
   animate();
@@ -2423,26 +2446,79 @@ async function init() {
     }
   }, 3000);
   
-  // EVENTO CLICK MEJORADO PARA FORZAR AUDIO
-  document.addEventListener('click', forceAudioStart, { passive: true });
-  document.addEventListener('touchstart', forceAudioStart, { passive: true });
-  document.addEventListener('keydown', forceAudioStart, { passive: true });
+  // CONFIGURAR EVENTOS DE INTERACCIÓN
+  setupInteractionEvents();
   
   // Hide loading screen
   setTimeout(() => {
     document.getElementById('loading').classList.add('hidden');
+    console.log("📱 Pantalla de carga oculta");
+    
     // Intentar reproducir después de ocultar loading
-    setTimeout(attemptAutoplay, 1000);
+    setTimeout(() => {
+      attemptAutoplay();
+    }, 500);
+    
   }, 2000);
   
-  // Último intento después de todo esté cargado
+  // Primer intento de reproducción inmediata
   setTimeout(() => {
-    const audioElement = document.getElementById('background-music');
-    if (audioElement.paused) {
-      console.log("🔄 Último intento de reproducción automática");
-      attemptAutoplay();
+    attemptAutoplay();
+  }, 1000);
+  
+  console.log("✅ Inicialización completa");
+}
+
+    function setupInteractionEvents() {
+  console.log("🎯 Configurando eventos de interacción...");
+  
+  // Función unificada para manejar todas las interacciones
+  const handleInteraction = (event) => {
+    console.log("👆 Interacción capturada:", event.type);
+    forceAudioStart(event);
+    
+    // Intentar fullscreen en click
+    if (event.type === 'click' || event.type === 'touchstart') {
+      try {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen().then(() => {
+            console.log("🖥️ Fullscreen activado");
+            // Forzar audio después de fullscreen
+            setTimeout(() => forceAudioStart(), 100);
+          }).catch(err => {
+            console.log("❌ Error fullscreen:", err.message);
+          });
+        }
+      } catch (error) {
+        console.log("❌ Fullscreen no soportado:", error.message);
+      }
     }
-  }, 5000);
+  };
+  
+  // Eventos múltiples para capturar cualquier interacción
+  const events = ['click', 'touchstart', 'touchend', 'keydown', 'mousedown'];
+  
+  events.forEach(eventType => {
+    document.addEventListener(eventType, handleInteraction, { 
+      once: false, // Permitir múltiples intentos
+      passive: true,
+      capture: true // Capturar en fase de captura
+    });
+  });
+  
+  // Evento especial para cuando el documento gana foco
+  window.addEventListener('focus', () => {
+    console.log("🎯 Ventana enfocada");
+    setTimeout(() => forceAudioStart(), 100);
+  });
+  
+  // Evento para visibilidad de la página
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      console.log("👁️ Página visible");
+      setTimeout(() => forceAudioStart(), 100);
+    }
+  });
 }
 
     function forceAudioStart() {
@@ -2478,11 +2554,72 @@ async function init() {
   }
 }
 
-window.addEventListener('click', () => {
-  if (state.audioContext && state.audioContext.state === 'suspended') {
-    state.audioContext.resume();
+// ESTRATEGIA AGRESIVA DE REPRODUCCIÓN
+let audioStarted = false;
+
+function handleFirstInteraction(event) {
+  if (audioStarted) return;
+  
+  console.log("🎯 Primera interacción detectada:", event.type);
+  
+  const audioElement = document.getElementById('background-music');
+  
+  // Configurar audio inmediatamente
+  audioElement.muted = false;
+  audioElement.volume = 0.5;
+  audioElement.currentTime = 0;
+  
+  // Intentar reproducir inmediatamente
+  const playPromise = audioElement.play();
+  
+  if (playPromise !== undefined) {
+    playPromise.then(() => {
+      console.log("✅ MÚSICA INICIADA CON ÉXITO!");
+      audioStarted = true;
+      
+      // Resume audio context
+      if (state.audioContext && state.audioContext.state === 'suspended') {
+        state.audioContext.resume().then(() => {
+          console.log("🎧 Audio context activado");
+        });
+      }
+      
+    }).catch(error => {
+      console.log("❌ Error reproduciendo:", error.message);
+      
+      // Último intento con delay
+      setTimeout(() => {
+        audioElement.play().then(() => {
+          console.log("✅ Música iniciada en segundo intento");
+          audioStarted = true;
+        }).catch(e => console.log("❌ Segundo intento falló:", e.message));
+      }, 100);
+    });
   }
+  
+  // Fullscreen
+  try {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.log(`Fullscreen error: ${err.message}`);
+      });
+    }
+  } catch (error) {
+    console.log("Error fullscreen: " + error.message);
+  }
+}
+
+// Registrar múltiples eventos para la primera interacción
+const interactionEvents = ['click', 'touchstart', 'touchend', 'mousedown', 'keydown'];
+interactionEvents.forEach(eventType => {
+  document.addEventListener(eventType, handleFirstInteraction, { 
+    once: false, // No usar once para permitir múltiples intentos
+    passive: true,
+    capture: true 
+  });
 });
+    
+    );
 
 
     // Start everything
